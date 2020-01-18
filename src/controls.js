@@ -1,72 +1,105 @@
-const makeId = () => Math.random().toString(36).slice(2);
+import makeId from './id';
 
-const controls = () => {
-  const keyMap = {};
-  const state = {};
+const keyboardControl = (connect, notify) => (id, keymap) => {
+  const disconnect = connect(id);
+  if (!disconnect) {
+    return () => {};
+  }
 
-  const onKeyDown = (event) => {
-    const map = keyMap[event.code];
-    if (!map) return;
+  const makeEventHandler = value => event => {
+    const action = keymap[event.code];
+    if (!action) return;
 
-    state[map.id][map.key] = true;
+    notify(id, action, value);
   };
 
-  const onKeyUp = (event) => {
-    const map = keyMap[event.code];
-    if (!map) return;
+  const onKeyDown = makeEventHandler(1);
+  const onKeyUp = makeEventHandler(0);
 
-    state[map.id][map.key] = false;
-  };
-
-  const onBlur = () => {
-    Object.keys(state).forEach((id) => {
-      state[id] = {};
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', onKeyUp);
+  window.addEventListener('blur', () => {
+    Object.values(keymap).forEach((key) => {
+      notify(id, key, 0);
     });
+  });
+
+  return () => {
+    window.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('keyup', onKeyUp);
+    disconnect();
   };
-
-
-  const ref = {
-    add: (events) => {
-      const id = makeId();
-
-      state[id] = {};
-
-      Object.keys(events).forEach((key) => {
-        keyMap[key] = { id, key: events[key] };
-      });
-
-      return id;
-    },
-
-    remove: (id) => {
-      Object.keys(keyMap).forEach((key) => {
-        if (keyMap[key].id !== id) return;
-
-        delete keyMap[key];
-        delete state[id];
-      });
-    },
-
-    snapshot: () => JSON.parse(JSON.stringify(state)),
-
-    attach: () => {
-      window.addEventListener('keydown', onKeyDown);
-      window.addEventListener('keyup', onKeyUp);
-      window.addEventListener('blur', onBlur);
-
-      return ref;
-    },
-
-    detach: () => {
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-      window.removeEventListener('blur', onBlur);
-
-      return ref;
-    },
-  };
-
-  return ref;
 };
 
-export default controls;
+const control = (initialControlState) => {
+  const ids = [];
+  const state = {};
+  const disconnects = {};
+  const listeners = {};
+
+  const connect = (id) => {
+    if (ids.includes(id)) {
+      return false;
+    }
+
+    ids.push(id);
+    state[id] = JSON.parse(JSON.stringify(initialControlState));
+
+    disconnects[id] = () => {
+      const index = ids.indexOf(id);
+      if (index >= 0) {
+        ids.splice(index, 1);
+      }
+
+      delete state[id];
+      delete disconnects[id];
+    };
+
+    return disconnects[id];
+  };
+
+  const notify = (id, key, value) => {
+    if (state[id][key] !== value) {
+      state[id] = { ...state[id], [key]: Number.isNaN(value) ? Number(Boolean(value)) : value };
+      Object.values(listeners).forEach(c => c(state));
+    }
+  };
+
+  return {
+    keyboard: keyboardControl(connect, notify),
+
+    snapshot: () => JSON.parse(JSON.stringify(state)),
+    ids: () => [...ids],
+
+    listen: (callback) => {
+      const id = makeId();
+      listeners[id] = callback;
+      return () => {
+        delete listeners[id];
+      };
+    },
+
+    disconnect: () => {
+      for(const id of ids) {
+        disconnects[id]();
+      }
+    },
+  };
+};
+
+export default control;
+
+export const KEYMAPS = {
+  wasd: {
+    KeyW: 'up',
+    KeyA: 'left',
+    KeyS: 'down',
+    KeyD: 'right',
+  },
+  arrows: {
+    ArrowUp: 'up',
+    ArrowLeft: 'left',
+    ArrowDown: 'down',
+    ArrowRight: 'right',
+  },
+};
