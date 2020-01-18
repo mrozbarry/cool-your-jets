@@ -1,12 +1,12 @@
-import planck from 'planck-js';
+import p2 from 'p2';
 
 export const create = () => {
   return {
     timestep: 1 / 60,
     accumulator: 0,
     previousTick: null,
-    world: new planck.World({
-      gravity: planck.Vec2(0, 0),
+    world: new p2.World({
+      gravity: [0, 0.01],
     }),
   };
 };
@@ -17,8 +17,12 @@ export const drain = (currentSimulation) => ({
   previousTick: null,
 });
 
-export const step = (delta, simulation) => {
-  const { timestep, world } = simulation;
+export const step = (timestamp, simulation) => {
+  const { previousTick, timestep, world } = simulation;
+  let delta = timestamp && previousTick
+    ? ((timestamp - previousTick) / 1000)
+    : 0;
+
   let accumulator = simulation.accumulator + delta;
 
   while (accumulator > timestep) {
@@ -30,21 +34,6 @@ export const step = (delta, simulation) => {
     ...simulation,
     world,
     accumulator,
+    previousTick: timestamp,
   };
-};
-
-export const eachBody = (bodyCallback, simulation) => {
-  let body = simulation.world.getBodyList();
-  while (body) {
-    bodyCallback(body);
-    body = body.getNext();
-  }
-};
-
-export const eachFixture = (fixtureCallback, body) => {
-  let fixture = body.getFixtureList();
-  while (fixture) {
-    fixtureCallback(fixture);
-    fixture = fixture.getNext();
-  }
 };

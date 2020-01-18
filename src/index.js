@@ -1,147 +1,118 @@
-import * as Simulation from './simulation';
-import * as p from 'planck-js';
-import controls from './controls';
+import Control, { KEYMAPS } from '#/controls';
+import debounce from '#/debounce';
+import render from '#/canvas';
+import scene from '#/scenes/empty';
+import * as particleEngine from '#/particleEngine';
+import * as shipObject from '#/objects/ship';
+import tickManager from '#/tick';
+import screamingNeonFont from '#/assets/fonts/screaming_neon/screaming_neon.ttf';
 
-const createShip = ({ world }) => {
-  const body = world.createBody({
-    type: 'dynamic',
-    position: p.Vec2(400, 300),
-    angularDamping: 2.0,
-    linearDamping: 0.5,
-  });
+const control = Control({ up: 0, left: 0, down: 0, right: 0 });
+control.keyboard('user1', KEYMAPS.wasd);
+control.keyboard('user2', KEYMAPS.arrows);
 
-  body.createFixture(
-    p.Polygon([
-      p.Vec2(-0.15, -0.15),
-      p.Vec2( 0,    -0.1),
-      p.Vec2( 0.15, -0.15),
-      p.Vec2( 0,     0.2),
-    ]),
-    {
-      density: 1000,
-    },
-  );
+const initCanvas = (canvasElement) => {
+  const ctx = canvasElement.getContext('2d');
 
-  return body;
-};
+  const resize = () => {
+    canvasElement.width = window.innerWidth; // * window.devicePixelRatio;
+    canvasElement.height = window.innerHeight; // * window.devicePixelRatio;
+  };
 
-const setup = () => {
-  const sim = Simulation.create();
-  const keyboardControls = controls().attach();
+  const resizeDebounce = debounce(resize, 250);
 
-  const shipA = createShip(sim);
-  const idA = keyboardControls.add({
-    KeyW: 'up',
-    KeyA: 'left',
-    KeyS: 'down',
-    KeyD: 'right',
-  });
-
-  //const shipB = createShip(sim);
-  //const idB = keyboardControls.add({
-    //ArrowUp: 'up',
-    //ArrowLeft: 'left',
-    //ArrowDown: 'down',
-    //ArrowRight: 'right',
-  //});
-
+  window.addEventListener('resize', resizeDebounce);
+  resize();
 
   return {
-    sim,
-    keyboardControls,
-    ships: {
-      [idA]: shipA,
-      // [idB]: shipB,
+    detach: () => {
+      window.removeEventListener('resize', resizeDebounce);
     },
+    ctx,
   };
 };
 
-const physics = (timestamp, sim) => {
-  const delta = sim.previousTick === null
-    ? 0
-    : timestamp - sim.previousTick;
+const add = vecA => vecB => vecA.map((v, idx) => v + vecB[idx]);
 
-  return {
-    ...Simulation.step(delta, sim),
-    previousTick: timestamp,
+const main = () => {
+  const { ctx } = initCanvas(document.querySelector('canvas'));
+
+  let particles = particleEngine.make();
+
+  let cancel = null;
+  let lastTime = null;
+
+  const ships = {
+    user1: shipObject.shields(4, shipObject.position([200, 200], shipObject.identity('ozbarry'))),
+    user2: shipObject.shields(3, shipObject.position([300, 200], shipObject.identity('ernikins'))),
+    user3: shipObject.shields(2, shipObject.position([400, 200], shipObject.identity('shames'))),
+    user4: shipObject.shields(1, shipObject.position([500, 200], shipObject.identity('psitiki'))),
   };
-};
 
-const input = (keyboardControls, ships) => {
-  const ids = Object.keys(ships);
+  const tick = (time) => {
+    const delta = (time - lastTime) / 1000;
+    lastTime = time;
 
-  const snapshot = keyboardControls.snapshot();
+    Object.keys(ships).forEach((userKey) => {
+      const ship = ships[userKey];
+      const thrusters = shipObject.getThrusters(ship);
+      const thrustersWithRandom = thrusters.map(p => p.map(t => t + (Math.random() * 2)));
 
-  ids.forEach((id) => {
-    const ship = ships[id];
-    const state = snapshot[id];
-    if (state.up) {
-      console.log('thrust', id);
-      ship.applyLinearImpulse(
-        ship.getWorldVector(p.Vec2(0, 1)),
-        ship.getWorldVector(p.Vec2(0, 2)),
-        true,
-      );
-    }
+      const adder = add(ship.offset);
 
-    if (state.left) {
-      console.log('left', id);
-      ship.applyAngularImpulse(0.1, true);
-    } else if (state.right) {
-      console.log('right', id);
-      ship.applyAngularImpulse(-0.1, true);
-    }
-  });
-};
-
-const draw = (ctx, sim) => {
-  ctx.clearRect(0, 0, 800, 600);
-  Simulation.eachBody((body) => {
-    Simulation.eachFixture((fixture) => {
-      const shape = fixture.getShape();
-      const vertices = shape.m_vertices;
-
-      ctx.scale(16, 16);
-      ctx.beginPath();
-      for(let i = 0; i < vertices.length; i++) {
-        const { x, y } = vertices[i];
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
+      if (Math.random() > 0.3) {
+        particles = thrustersWithRandom
+          .reduce((particleList, thrusterPosition) => (
+            particleEngine.add(
+              adder(thrusterPosition),
+              'thrust',
+              3,
+              particleList,
+            )
+          ), particles);
       }
-      ctx.strokeStyle = '#000';
-      ctx.stroke();
-    }, body);
-  }, sim);
-};
+    });
 
-const run = (canvas) => {
-  let {
-    sim,
-    keyboardControls,
-    ships,
-  } = setup();
-  let rafHandle = null;
-  const ctx = canvas.getContext('2d');
+    const gravity = [0, (delta * 20)];
+    particles = particleEngine.moveEach(gravity, particles);
 
-  const tick = (timestamp) => {
-    if (!sim) return;
+    render(
+      scene(
+        Object.values(ships),
+        particles,
+        ctx,
+      ),
+      ctx,
+    );
 
-    input(keyboardControls, ships);
-    sim = physics(timestamp, sim);
-    draw(ctx, sim);
+    particles = particleEngine.tick(delta, particles);
 
-    rafHandle = requestAnimationFrame(tick);
+    schedule();
   };
 
-  tick();
-
-  return () => {
-    cancelAnimationFrame(rafHandle);
-    sim = null;
+  const schedule = () => {
+    cancel = tickManager(tick, 1 / 60);
   };
+
+  const unschedule = () => {
+    return cancel && cancel();
+  };
+
+  const onFocusChange = () => {
+    return document.hasFocus()
+      ? schedule()
+      : unschedule();
+  };
+
+  window.addEventListener('blur', onFocusChange);
+  window.addEventListener('focus', () => {
+    onFocusChange();
+    lastTime = performance.now();
+  });
+
+  schedule();
 };
 
-run(document.querySelector('canvas'));
+(new FontFace('screaming_neon', `url(${screamingNeonFont})`))
+  .load()
+  .then(main);
