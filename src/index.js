@@ -1,15 +1,12 @@
-import Control, { KEYMAPS } from '#/controls';
-import debounce from '#/debounce';
-import render from '#/canvas';
+import Control, { KEYMAPS } from '#/lib/controls';
+import debounce from '#/lib/debounce';
+import render from '#/lib/canvas';
 import scene from '#/scenes/empty';
+import * as simulation from '#/lib/simulation';
 import * as particleEngine from '#/particleEngine';
+import * as projectileEngine from '#/projectileEngine';
 import * as shipObject from '#/objects/ship';
-import tickManager from '#/tick';
-import screamingNeonFont from '#/assets/fonts/screaming_neon/screaming_neon.ttf';
-
-const control = Control({ up: 0, left: 0, down: 0, right: 0 });
-control.keyboard('user1', KEYMAPS.wasd);
-control.keyboard('user2', KEYMAPS.arrows);
+import tickManager from '#/lib/tick';
 
 const initCanvas = (canvasElement) => {
   const ctx = canvasElement.getContext('2d');
@@ -32,87 +29,172 @@ const initCanvas = (canvasElement) => {
   };
 };
 
-const add = vecA => vecB => vecA.map((v, idx) => v + vecB[idx]);
+const makeShip = (name, position, power = 'ssslllttt') => {
+  return shipObject.shields(
+    1,
+    shipObject.distributePower(
+      power,
+      shipObject.make(
+        name,
+        position,
+      ),
+    ),
+  );
+};
 
 const main = () => {
   const { ctx } = initCanvas(document.querySelector('canvas'));
 
-  let particles = particleEngine.make();
+  let running = true;
 
-  let cancel = null;
+  let particles = particleEngine.make();
+  let projectiles = projectileEngine.make();
+
+  const control = Control({ up: 0, left: 0, down: 0, right: 0 });
+  control.keyboard('user1', KEYMAPS.wasd);
+  control.keyboard('user2', KEYMAPS.arrows);
+
+
+  let cancelFrame = null;
   let lastTime = null;
 
   const ships = {
-    user1: shipObject.shields(4, shipObject.position([200, 200], shipObject.identity('ozbarry'))),
-    user2: shipObject.shields(3, shipObject.position([300, 200], shipObject.identity('ernikins'))),
-    user3: shipObject.shields(2, shipObject.position([400, 200], shipObject.identity('shames'))),
-    user4: shipObject.shields(1, shipObject.position([500, 200], shipObject.identity('psitiki'))),
+    user1: makeShip('ozbarry', [100, 200], 'llllllltt'),
+    user2: makeShip('ozbarry2', [250, 200], 'ssllllttt'),
+    // user3: makeShip('ozbarry3', [400, 200], 'ssslltttt'),
+    // user4: makeShip('ozbarry4', [550, 200], 'slllltttt'),
   };
+
+  let sim = simulation.make();
+  Object.values(ships).forEach((ship) => {
+    sim.world.addBody(ship.body);
+  });
+
+  const players = Object.keys(ships);
+
+  const addThrustParticles = (controls) => {
+    for(const key of players) {
+      if (!controls[key]) continue;
+
+      const ship = ships[key];
+      const { up } = controls[key];
+
+      if (up) {
+        let vec = [0, 0];
+        ship.body.toWorldFrame(vec, [0, 30]);
+        particles = particleEngine.add(
+          vec.map(v => v + ((Math.random() * 8) - 4)),
+          'simple',
+          10,
+          sim.world,
+          particles,
+        );
+      }
+    }
+  };
+
+  const addLasers = (controls) => {
+    for(const key of players) {
+      if (!controls[key]) continue;
+
+      const ship = ships[key];
+      const { down } = controls[key];
+
+      if (down && performance.now() > ship.fireLock) {
+        projectiles = projectileEngine.add(ship.body, sim.world, projectiles);
+        ship.fireLock = performance.now() + 250;
+      }
+    }
+  };
+
+  const handleInput = (controls) => {
+    for(const key of players) {
+      if (!controls[key]) continue;
+
+      const ship = ships[key];
+      const { up, left, right } = controls[key];
+
+      ship.body.applyForceLocal([0, up * -500]);
+      ship.body.angularVelocity = (right - left) * 2;
+    }
+  };
+
+  sim.world.on('postStep', () => {
+    handleInput(control.snapshot());
+    projectileEngine.step(projectiles);
+  });
+
+  sim.world.on('beginContact', (event) => {
+    const bodies = [event.bodyA, event.bodyB];
+  });
 
   const tick = (time) => {
     const delta = (time - lastTime) / 1000;
     lastTime = time;
 
-    Object.keys(ships).forEach((userKey) => {
-      const ship = ships[userKey];
-      const thrusters = shipObject.getThrusters(ship);
-      const thrustersWithRandom = thrusters.map(p => p.map(t => t + (Math.random() * 2)));
+    if (!running) {
+      return;
+    }
 
-      const adder = add(ship.offset);
+    const controls = control.snapshot();
+    addLasers(controls);
+    addThrustParticles(controls);
 
-      if (Math.random() > 0.3) {
-        particles = thrustersWithRandom
-          .reduce((particleList, thrusterPosition) => (
-            particleEngine.add(
-              adder(thrusterPosition),
-              'thrust',
-              3,
-              particleList,
-            )
-          ), particles);
-      }
-    });
+    sim = simulation.step(time, sim);
 
-    const gravity = [0, (delta * 20)];
-    particles = particleEngine.moveEach(gravity, particles);
+    particles = particleEngine.tick(delta, sim.world, particles);
+    projectiles = projectileEngine.tick(delta, sim.world, projectiles);
 
     render(
       scene(
         Object.values(ships),
         particles,
+        projectiles,
         ctx,
       ),
       ctx,
     );
 
-    particles = particleEngine.tick(delta, particles);
-
     schedule();
   };
 
   const schedule = () => {
-    cancel = tickManager(tick, 1 / 60);
+    cancelFrame = tickManager(tick, 1 / 60);
   };
 
   const unschedule = () => {
-    return cancel && cancel();
+    return cancelFrame && cancelFrame();
   };
 
   const onFocusChange = () => {
-    return document.hasFocus()
+    running = document.hasFocus();
+    return running
       ? schedule()
       : unschedule();
   };
 
-  window.addEventListener('blur', onFocusChange);
-  window.addEventListener('focus', () => {
+  const onFocus = () => {
     onFocusChange();
     lastTime = performance.now();
-  });
+  };
+
+  window.addEventListener('blur', onFocusChange);
+  window.addEventListener('focus', onFocus);
 
   schedule();
+
+  return () => {
+    window.removeEventListener('blur');
+    window.removeEventListener('focus');
+    window.removeEventListener('onKeyDown');
+    window.removeEventListener('onKeyUp');
+    sim.world.clear();
+    running = false;
+  };
 };
 
-(new FontFace('screaming_neon', `url(${screamingNeonFont})`))
-  .load()
-  .then(main);
+let cancel = main();
+
+if (module.hot) {
+  module.hot.dispose(() => cancel());
+}

@@ -1,37 +1,34 @@
-import { circleFill, radialGradient } from '#/canvas';
+import { translate, fillStyle, path, fill, moveTo, lineTo } from '#/lib/canvas';
 
-const c = ([x, y], radius, percent) => {
-  const r = radius * percent;
-  if (r <= 0) return [];
+const maybeRender = (v = 0.5) => Math.random() > v;
 
-  const h = 30 + ((Math.random() * 20) - 10);
-  const l = Math.random(Math.random() * 60) + 40;
-
-  return radialGradient(
-    'fillStyle',
-    [x, y],
-    1,
-    [x, y],
-    r,
-    [
-      [0, `hsla(${h}, 100%, ${l}%, 0.8)`],
-      [0.4, `hsla(${h}, 100%, ${l}%, 0.1)`],
-      [1, `hsla(${h}, 100%, ${l}%, 0)`],
-    ],
-    [
-      circleFill([x, y], r),
-    ],
-  );
+const atom = (size) => {
+  const half = size / 2;
+  return path({ close: true, after: fill }, [
+    moveTo([-half, -half]),
+    lineTo([half, -half]),
+    lineTo([half, half]),
+    lineTo([-half, half]),
+    lineTo([-half, -half]),
+  ]);
 };
 
+const simple = ({ life: [current, total] }) => {
+  const percent = 1 - (current / total);
+  const r = 8 * percent;
+  if (r <= 0) return [];
 
-const simple = ({ p, life: [current, total] }) => {
-  const percent = current / total;
+  const h = 30 + ((Math.random() * 10) - 5);
+  const l = `${percent * 80}%`;
+
   return [
-    c(p, 10, 1 - percent),
+    maybeRender() && fillStyle(`hsla(${h}, 100%, ${l}, 0.1)`, atom(r * 2.5)),
+    maybeRender() && fillStyle(`hsla(${h}, 100%, ${l}, 0.1)`, atom(r * 2)),
+    fillStyle(`hsla(${h}, 100%, ${l}, 1.0)`, atom(r)),
   ];
 };
 
-export default (props) => {
-  return simple(props);
-};
+export default (particle) => translate(
+  Array.from(particle.body.interpolatedPosition),
+  simple(particle),
+);

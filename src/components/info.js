@@ -1,41 +1,52 @@
-import { properties, textStroke, polygonStroke, translate, beginPath, moveTo, lineTo, stroke } from '#/canvas';
+import { properties, textStroke, textFill, translate, path, moveTo, lineTo, stroke } from '#/lib/canvas';
 
 const maybeRender = (v = 0.1) => Math.random() > v;
 
-const text = ([x, y], text, lineWidth, strokeStyle) => properties({
-  lineWidth,
-  strokeStyle,
-  font: '16px screaming_neon',
-  textAlign: 'left',
-  textBaseline: 'top',
-}, [
-  textStroke([x, y], text),
-]);
+const text = ([x, y], text, lineWidth, style) => {
+  const styleProperty = lineWidth === 1
+    ? { fillStyle: style }
+    : { strokeStyle: style };
+
+  const textFn = lineWidth === 1 ? textFill : textStroke;
+
+  return properties({
+    lineWidth,
+    ...styleProperty,
+    font: '16px screaming_neon',
+    textAlign: 'left',
+    textBaseline: 'top',
+  }, [
+    textFn([x, y], text),
+  ]);
+};
 
 const fuzzyText = (ship) => [
-  //maybeRender(0.6) && text([ship.offset[0] - 30, ship.offset[1] - 70], ship.name, 5, 'hsla(0, 50%, 70%, 0.3)'),
-  //maybeRender(0.6) && text([ship.offset[0] - 30, ship.offset[1] - 70], ship.name, 3, 'hsla(0, 50%, 70%, 0.3)'),
-  maybeRender(0) && text([ship.offset[0] - 30, ship.offset[1] - 70], ship.name, 1, 'hsla(0, 50%, 100%, 1.0)'),
+  maybeRender(0.6) && text([-30, -70], ship.name, 3, 'hsla(0, 100%, 100%, 0.3)'),
+  maybeRender(0.6) && text([-30, -70], ship.name, 2, 'hsla(0, 100%, 100%, 0.3)'),
+  maybeRender(0) && text([-30, -70], ship.name, 1, 'hsla(0, 100%, 100%, 1.0)'),
 ];
 
-const box = ([x, y], [w, h], lineWidth, strokeStyle) => properties({
+const bar = ([x, y], [w], lineWidth, strokeStyle) => properties({
   lineWidth,
   strokeStyle,
 }, [
-  translate([x, y], [
-    polygonStroke([
-      [0, 0],
-      [w, 0],
-      [w, h],
-      [0, h],
-    ]),
+  path({ close: false, after: stroke }, [
+    moveTo([x, y]),
+    lineTo([x + w, y]),
   ]),
 ]);
 
-const fuzzyBoxStroke = ([x, y], size, hue) => [
-  maybeRender(0.2) && box([x, y], [size, size], 10, `hsla(${hue}, 50%, 50%, 0.1)`),
-  maybeRender(0.2) && box([x, y], [size, size], 6, `hsla(${hue}, 50%, 50%, 0.1)`),
-  maybeRender(0.1) && box([x, y], [size, size], 2, `hsla(${hue}, 50%, 50%, 1.0)`),
+const fuzzyBar = ([x, y], [w], hue) => [
+  maybeRender(0.3) && bar([x - 4, y], [w + 8], 11, `hsla(${hue}, 100%, 60%, 0.1)`),
+  maybeRender(0.3) && bar([x - 2, y], [w + 4], 5, `hsla(${hue}, 100%, 60%, 0.1)`),
+  bar([x, y], [w], 1, `hsl(${hue}, 100%, 60%)`),
+];
+
+const fuzzyPercentBar = ([x, y], [w], percent, hue) => [
+  bar([x, y], [w], 1, `hsl(${hue}, 0%, 50%)`),
+  maybeRender(0.3) && bar([x - 4, y], [(w * percent) + 8], 11, `hsla(${hue}, 100%, 60%, 0.1)`),
+  maybeRender(0.3) && bar([x - 2, y], [(w * percent) + 4], 5, `hsla(${hue}, 100%, 60%, 0.1)`),
+  bar([x, y], [w * percent], 1, `hsl(${hue}, 100%, 60%)`),
 ];
 
 const infoLine = (points, lineWidth, strokeStyle) => {
@@ -46,10 +57,13 @@ const infoLine = (points, lineWidth, strokeStyle) => {
     lineWidth,
     strokeStyle,
   }, [
-    beginPath(),
-    moveTo(first),
-    ...tail.map(p => lineTo(p)),
-    stroke(),
+    path({
+      closed: false,
+      after: stroke,
+    }, [
+      moveTo(first),
+      ...tail.map(p => lineTo(p)),
+    ]),
   ]);
 };
 
@@ -58,28 +72,24 @@ const fuzzyInfoLine = (points) => [
   infoLine(points, 1, 'hsla(0, 100%, 100%, 1)'),
 ];
 
-const infoBoxColor = {
-  s: 180,
-  t: 30,
-  l: 0,
-};
-
 export default (ship) => {
-  return [
+  const items = ship.power.split('');
+  const total = items.length - 2;
+
+  const shield = items.filter(p => p === 's').length / total;
+  const thruster = items.filter(p => p === 't').length / total;
+  const laser = items.filter(p => p === 'l').length / total;
+
+  return translate(ship.body.interpolatedPosition, [
     fuzzyInfoLine([
-      [ship.offset[0] - 60, ship.offset[1]],
-      [ship.offset[0] - 70, ship.offset[1]],
-      [ship.offset[0] - 70, ship.offset[1] - 60],
-      [ship.offset[0] - 40, ship.offset[1] - 60],
+      [-60, 0],
+      [-70, 0],
+      [-70, -60],
+      [-40, -60],
     ]),
     fuzzyText(ship),
-    ship.power.map((powerItem, index) => {
-      const x = ship.offset[0] - 30 + (index * 10);
-      return fuzzyBoxStroke(
-        [x, ship.offset[1] - 55],
-        6,
-        infoBoxColor[powerItem],
-      );
-    }),
-  ];
+    fuzzyPercentBar([-30, -52], [60], shield, 180),
+    fuzzyPercentBar([-30, -49], [60], thruster, 30),
+    fuzzyPercentBar([-30, -46], [60], laser, 0),
+  ]);
 };

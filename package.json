@@ -11,7 +11,8 @@
   "dependencies": {
     "esm": "^3.2.25",
     "p2": "^0.7.1",
-    "planck-js": "^0.3.12"
+    "planck-js": "^0.3.12",
+    "tone": "^13.8.25"
   },
   "devDependencies": {
     "@types/matter-js": "^0.10.7",

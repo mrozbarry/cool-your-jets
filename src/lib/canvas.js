@@ -1,10 +1,10 @@
 const styleOp = (key) => (value, children) => (ctx) => {
-  const old = ctx[key];
+  ctx.save();
   ctx[key] = value;
 
   render(children, ctx);
 
-  ctx[key] = old;
+  ctx.restore();
 };
 
 const callOp = (key) => () => (ctx) => {
@@ -26,19 +26,18 @@ const OP = {
   textBaseline: styleOp('textBaseline'),
 
   radialGradient: ({ targetProp, innerPosition, innerRadius, outerPosition, outerRadius, colorStops }, children) => (ctx) => {
+    ctx.save();
     const gradient = ctx.createRadialGradient(
       innerPosition[0], innerPosition[1], innerRadius,
       outerPosition[0], outerPosition[1], outerRadius,
     );
     colorStops.forEach(cs => gradient.addColorStop(...cs));
 
-    const old = ctx[targetProp];
-
     ctx[targetProp] = gradient;
 
     render(children, ctx);
 
-    ctx[targetProp] = old;
+    ctx.restore();
   },
 
   clear: () => (ctx) => ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height),
@@ -46,11 +45,21 @@ const OP = {
   rectFill: ({ p, s }) => (ctx) => ctx.fillRect(p[0], p[1], s[0], s[1]),
 
   translate: ([x, y], children = []) => (ctx, render) => {
+    ctx.save();
     ctx.translate(x, y);
 
     render(children, ctx);
 
-    ctx.translate(-x, -y);
+    ctx.restore();
+  },
+
+  rotate: (radians, children = []) => (ctx, render) => {
+    ctx.save();
+    ctx.rotate(radians);
+
+    render(children, ctx);
+
+    ctx.restore();
   },
 
   beginPath: callOp('beginPath'),
@@ -93,9 +102,17 @@ export const radialGradient = (targetProp, innerPosition, innerRadius, outerPosi
 export const clear = () => makeOp('clear', [], []);
 export const rectFill = ([x, y], [w, h]) => makeOp('rectFill', { p: [x, y], s: [w, h] }, []);
 export const translate = ([x, y], children) => makeOp('translate', [x, y], children);
+export const rotate = (radians, children) => makeOp('rotate', radians, children);
 
 export const beginPath = () => makeOp('beginPath');
 export const closePath = () => makeOp('closePath');
+
+export const path = ({ close, after = stroke }, children) => [
+  beginPath(),
+  children,
+  (close ? [closePath()] : []),
+  after(),
+];
 
 export const moveTo = ([x, y]) => makeOp('moveTo', [x, y]);
 export const lineTo = ([x, y]) => makeOp('lineTo', [x, y]);
@@ -113,13 +130,10 @@ export const polygonStroke = (points) => {
   const first = points[0];
   const tail = points.slice(1);
 
-  return [
-    beginPath(),
+  return path({ close: true, after: stroke }, [
     moveTo(first),
     ...tail.map(point => lineTo(point)),
-    closePath(),
-    stroke(),
-  ];
+  ]);
 };
 
 export const circleStroke = ([x, y], radius) => [

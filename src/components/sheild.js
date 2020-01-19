@@ -1,4 +1,4 @@
-import { circleStroke, properties } from '#/canvas';
+import { circleStroke, properties } from '#/lib/canvas';
 
 const sheild = (radius, lineWidth, strokeStyle) => (
   properties({

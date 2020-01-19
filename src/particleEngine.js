@@ -1,22 +1,43 @@
+import p2 from 'p2';
+import * as physicsGroups from '#/groups';
+
 export const make = () => [];
 
-export const add = ([x, y], type, totalLife, particles) => [
-  ...particles,
-  { p: [x, y], type, life: [0, totalLife] },
-];
+export const add = ([x, y], type, totalLife, world, particles) => {
+  const body = new p2.Body({
+    mass: 5,
+    position: [x, y],
+  });
 
-export const moveEach = ([x, y], particles) => particles.map(p => ({
-  ...p,
-  p: [p.p[0] + x, p.p[1] + y],
-}));
+  const shape = new p2.Particle({
+    collisionGroup: physicsGroups.THRUST,
+    collisionMask: physicsGroups.LASER,
+  });
 
-export const tick = (delta, particles) => particles.reduce((list, item) => {
+  body.addShape(shape);
+
+  world.addBody(body);
+
+  return [
+    ...particles,
+    {
+      body,
+      type,
+      life: [0, totalLife],
+    },
+  ];
+};
+
+export const tick = (delta, world, particles) => particles.reduce((list, item) => {
   const particle = {
     ...item,
     life: [item.life[0] + delta, item.life[1]],
   };
 
-  return (particle.life[0] > particle.life[1]) 
-    ? list
-    : list.concat(particle);
+  if (particle.life[0] > particle.life[1]) {
+    world.removeBody(particle.body);
+    return list;
+  }
+
+  return list.concat(particle);
 }, []);
