@@ -5,7 +5,7 @@ import scene from '#/scenes/empty';
 import * as simulation from '#/lib/simulation';
 import * as particleEngine from '#/particleEngine';
 import * as projectileEngine from '#/projectileEngine';
-import * as shipObject from '#/objects/ship';
+import * as shipObject from '#/models/ship';
 import tickManager from '#/lib/tick';
 
 const initCanvas = (canvasElement) => {
@@ -51,18 +51,20 @@ const main = () => {
   let projectiles = projectileEngine.make();
 
   const control = Control({ up: 0, left: 0, down: 0, right: 0 });
-  control.keyboard('user1', KEYMAPS.wasd);
-  control.keyboard('user2', KEYMAPS.arrows);
+  control.keyboard('wasd', KEYMAPS.wasd);
+  control.keyboard('tfgh', KEYMAPS.tfgh);
+  control.keyboard('ijkl', KEYMAPS.ijkl);
+  control.keyboard('arrows', KEYMAPS.arrows);
 
 
   let cancelFrame = null;
   let lastTime = null;
 
   const ships = {
-    user1: makeShip('ozbarry', [100, 200], 'llllllltt'),
-    user2: makeShip('ozbarry2', [250, 200], 'ssllllttt'),
-    // user3: makeShip('ozbarry3', [400, 200], 'ssslltttt'),
-    // user4: makeShip('ozbarry4', [550, 200], 'slllltttt'),
+    wasd: makeShip('wasd', [100, 100], 'llllllltt'),
+    tfgh: makeShip('tfgh', [700, 100], 'ssllllttt'),
+    ijkl: makeShip('ijkl', [100, 500], 'ssslltttt'),
+    arrows: makeShip('arrows', [700, 500], 'slllltttt'),
   };
 
   let sim = simulation.make();
@@ -82,13 +84,17 @@ const main = () => {
       if (up) {
         let vec = [0, 0];
         ship.body.toWorldFrame(vec, [0, 30]);
-        particles = particleEngine.add(
-          vec.map(v => v + ((Math.random() * 8) - 4)),
-          'simple',
-          10,
-          sim.world,
-          particles,
-        );
+        const count = Math.round(Math.random() * 3) + 1;
+
+        for(let num = 0; num < count; num++) {
+          particles = particleEngine.add(
+            vec.map(v => v + ((Math.random() * 8) - 4)),
+            'simple',
+            10,
+            sim.world,
+            particles,
+          );
+        }
       }
     }
   };

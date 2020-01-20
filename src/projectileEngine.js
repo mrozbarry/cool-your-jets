@@ -1,4 +1,4 @@
-import * as laserObject from '#/objects/laser';
+import * as laserObject from '#/models/laser';
 
 export const make = () => [];
 
@@ -11,7 +11,7 @@ export const add = (parentBody, world, projectiles) => {
     ...projectiles,
     {
       body,
-      life: [0, 1],
+      life: [0, 3],
     },
   ];
 };

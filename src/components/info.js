@@ -37,16 +37,14 @@ const bar = ([x, y], [w], lineWidth, strokeStyle) => properties({
 ]);
 
 const fuzzyBar = ([x, y], [w], hue) => [
-  maybeRender(0.3) && bar([x - 4, y], [w + 8], 11, `hsla(${hue}, 100%, 60%, 0.1)`),
-  maybeRender(0.3) && bar([x - 2, y], [w + 4], 5, `hsla(${hue}, 100%, 60%, 0.1)`),
+  maybeRender(0.2) && bar([x - 4, y], [w + 8], 11, `hsla(${hue}, 100%, 60%, 0.1)`),
+  maybeRender(0.2) && bar([x - 2, y], [w + 4], 5, `hsla(${hue}, 100%, 60%, 0.1)`),
   bar([x, y], [w], 1, `hsl(${hue}, 100%, 60%)`),
 ];
 
 const fuzzyPercentBar = ([x, y], [w], percent, hue) => [
   bar([x, y], [w], 1, `hsl(${hue}, 0%, 50%)`),
-  maybeRender(0.3) && bar([x - 4, y], [(w * percent) + 8], 11, `hsla(${hue}, 100%, 60%, 0.1)`),
-  maybeRender(0.3) && bar([x - 2, y], [(w * percent) + 4], 5, `hsla(${hue}, 100%, 60%, 0.1)`),
-  bar([x, y], [w * percent], 1, `hsl(${hue}, 100%, 60%)`),
+  fuzzyBar([x, y], [w * percent], hue),
 ];
 
 const infoLine = (points, lineWidth, strokeStyle) => {

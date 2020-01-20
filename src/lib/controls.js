@@ -96,6 +96,18 @@ export const KEYMAPS = {
     KeyS: 'down',
     KeyD: 'right',
   },
+  tfgh: {
+    KeyT: 'up',
+    KeyF: 'left',
+    KeyG: 'down',
+    KeyH: 'right',
+  },
+  ijkl: {
+    KeyI: 'up',
+    KeyJ: 'left',
+    KeyK: 'down',
+    KeyL: 'right',
+  },
   arrows: {
     ArrowUp: 'up',
     ArrowLeft: 'left',
