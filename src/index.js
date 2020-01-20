@@ -3,10 +3,11 @@ import debounce from '#/lib/debounce';
 import render from '#/lib/canvas';
 import scene from '#/scenes/empty';
 import * as simulation from '#/lib/simulation';
-import * as particleEngine from '#/particleEngine';
 import * as projectileEngine from '#/projectileEngine';
 import * as shipObject from '#/models/ship';
 import tickManager from '#/lib/tick';
+import Particles from '#/middleware/Particles';
+import Projectiles from '#/middleware/Projectiles';
 
 const initCanvas = (canvasElement) => {
   const ctx = canvasElement.getContext('2d');
@@ -44,11 +45,12 @@ const makeShip = (name, position, power = 'ssslllttt') => {
 
 const main = () => {
   const { ctx } = initCanvas(document.querySelector('canvas'));
+  let sim = simulation.make();
 
   let running = true;
 
-  let particles = particleEngine.make();
-  let projectiles = projectileEngine.make();
+  let particles = new Particles(sim.world);
+  let projectiles = new Projectiles(sim.world);
 
   const control = Control({ up: 0, left: 0, down: 0, right: 0 });
   control.keyboard('wasd', KEYMAPS.wasd);
@@ -67,7 +69,6 @@ const main = () => {
     arrows: makeShip('arrows', [700, 500], 'slllltttt'),
   };
 
-  let sim = simulation.make();
   Object.values(ships).forEach((ship) => {
     sim.world.addBody(ship.body);
   });
@@ -87,12 +88,10 @@ const main = () => {
         const count = Math.round(Math.random() * 3) + 1;
 
         for(let num = 0; num < count; num++) {
-          particles = particleEngine.add(
+          particles.add(
             vec.map(v => v + ((Math.random() * 8) - 4)),
             'simple',
             10,
-            sim.world,
-            particles,
           );
         }
       }
@@ -107,7 +106,7 @@ const main = () => {
       const { down } = controls[key];
 
       if (down && performance.now() > ship.fireLock) {
-        projectiles = projectileEngine.add(ship.body, sim.world, projectiles);
+        projectiles.add(ship.body);
         ship.fireLock = performance.now() + 250;
       }
     }
@@ -127,11 +126,8 @@ const main = () => {
 
   sim.world.on('postStep', () => {
     handleInput(control.snapshot());
-    projectileEngine.step(projectiles);
-  });
-
-  sim.world.on('beginContact', (event) => {
-    const bodies = [event.bodyA, event.bodyB];
+    projectiles.postStep();
+    particles.postStep();
   });
 
   const tick = (time) => {
@@ -146,21 +142,23 @@ const main = () => {
     addLasers(controls);
     addThrustParticles(controls);
 
-    sim = simulation.step(time, sim);
+    particles.tick(delta);
+    projectiles.tick(delta);
 
-    particles = particleEngine.tick(delta, sim.world, particles);
-    projectiles = projectileEngine.tick(delta, sim.world, projectiles);
+    sim = simulation.step(time, sim);
 
     render(
       scene(
         Object.values(ships),
-        particles,
-        projectiles,
+        particles.particles,
+        projectiles.projectiles,
         ctx,
       ),
       ctx,
     );
 
+    particles.tickEnd(delta);
+    projectiles.tickEnd(delta);
     schedule();
   };
 
