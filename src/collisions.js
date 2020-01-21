@@ -11,3 +11,8 @@ export const laser = () => ({
   collisionGroup: LASER,
   collisionMask: LASER | SHIP | THRUST,
 });
+
+export const ship = () => ({
+  collisionGroup: SHIP,
+  collisionMask: SHIP | LASER,
+});

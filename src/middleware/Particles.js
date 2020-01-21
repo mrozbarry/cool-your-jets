@@ -1,15 +1,8 @@
-import BaseMiddleware from '#/middleware/Base';
+import BaseTimedObjectMiddleware from '#/middleware/BaseTimedObject';
 import p2 from 'p2';
 import * as collisions from '#/collisions';
 
-export default class Particles extends BaseMiddleware {
-  constructor(world) {
-    super(world);
-
-    this.particles = [];
-    this.pendingRemoves = [];
-  }
-
+export default class Particles extends BaseTimedObjectMiddleware {
   add([x, y], type, totalLife) {
     const body = new p2.Body({
       mass: 5,
@@ -30,32 +23,6 @@ export default class Particles extends BaseMiddleware {
 
     this.world.addBody(particle.body);
 
-    this.particles.push(particle);
-
-    return particle;
+    return super.add(particle);
   }
-
-  tick(delta) {
-    this.particles = this.particles.reduce((list, item) => {
-      const particle = {
-        ...item,
-        life: [item.life[0] + delta, item.life[1]],
-      };
-
-      if (particle.life[0] > particle.life[1]) {
-        this.pendingRemoves.push(particle);
-        return list;
-      }
-
-      return list.concat(particle);
-    }, []);
-  }
-
-  tickEnd() {
-    for(const particle of this.pendingRemoves) {
-      this.world.removeBody(particle.body);
-    }
-  }
-
-
 }
