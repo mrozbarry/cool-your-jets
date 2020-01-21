@@ -1,73 +1,79 @@
 import debounce from '#/lib/debounce';
 import render from '#/lib/canvas';
-import scene from '#/scenes/empty';
+import scene from '#/scenes/withFocus';
 import tickManager from '#/lib/tick';
 import Particles from '#/middleware/Particles';
-import Projectiles from '#/middleware/Projectiles';
-import KeyboardInput from '#/inputs/Keyboard';
+import Projectiles from '#/middleware/Projectiles'; import KeyboardInput from '#/inputs/Keyboard';
 import Game from '#/models/Game';
-
-const initCanvas = (canvasElement) => {
-  const ctx = canvasElement.getContext('2d');
-
-  const resize = () => {
-    canvasElement.width = window.innerWidth; // * window.devicePixelRatio;
-    canvasElement.height = window.innerHeight; // * window.devicePixelRatio;
-  };
-
-  const resizeDebounce = debounce(resize, 250);
-
-  window.addEventListener('resize', resizeDebounce);
-  resize();
-
-  return {
-    detach: () => {
-      window.removeEventListener('resize', resizeDebounce);
-    },
-    ctx,
-  };
-};
+import Screen from '#/lib/Screen';
 
 const main = () => {
-  const { ctx } = initCanvas(document.querySelector('canvas'));
   let running = true;
   let cancelFrame = null;
 
+
+  const screens = new Screen(1024, 768);
 
   const game = new Game(1 / 60);
   const particles = game.addMiddleware('particles', new Particles(game.world));
   const projectiles = game.addMiddleware('projectiles', new Projectiles(game.world));
 
-  game.addPlayer('WASD Boi', KeyboardInput.WASD());
-  game.addPlayer('Arrow Boi', KeyboardInput.Arrows());
+  const players = [
+    ['WASD Boi', KeyboardInput.WASD()],
+    ['Arrow Boi', KeyboardInput.Arrows()],
+    ['TFGH Boi', new KeyboardInput({
+      KeyT: 'up',
+      KeyF: 'left',
+      KeyG: 'down',
+      KeyH: 'right',
+    })],
+    ['IJKL Boi', new KeyboardInput({
+      KeyI: 'up',
+      KeyJ: 'left',
+      KeyK: 'down',
+      KeyL: 'right',
+    })],
+  ];
+
+  for(const details of players) {
+    const canvas = screens.add();
+    const info = game.addPlayer(...details);
+    canvas.ship = info.ship;
+  }
 
   const tick = (time) => {
     game.step(time);
 
-    render(
-      scene(
-        game.getShips(),
-        particles.items,
-        projectiles.items,
-        ctx,
-      ),
-      ctx,
-    );
+    for(const canvas of screens.canvases) {
+      render(
+        scene(
+          canvas.ship,
+          game.getShips(),
+          particles.items,
+          projectiles.items,
+          canvas,
+        ),
+        canvas.context,
+      );
+    }
 
-    schedule();
+    requestAnimationFrame(tick);
+    // schedule();
   };
 
   const schedule = () => {
-    cancelFrame = tickManager(tick, 1 / 60);
+    running = true;
+    requestAnimationFrame(tick);
+    // cancelFrame = tickManager(tick, 1 / 60);
   };
 
   const unschedule = () => {
-    return cancelFrame && cancelFrame();
+    running = false;
+    // return cancelFrame && cancelFrame();
   };
 
   const onFocusChange = () => {
-    running = document.hasFocus();
-    return running
+    return document.hasFocus()
       ? schedule()
       : unschedule();
   };

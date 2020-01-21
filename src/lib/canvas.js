@@ -44,6 +44,15 @@ const OP = {
 
   rectFill: ({ p, s }) => (ctx) => ctx.fillRect(p[0], p[1], s[0], s[1]),
 
+  scale: ([w, h], children = []) => (ctx, render) => {
+    ctx.save();
+    ctx.scale(w, h);
+
+    render(children, ctx);
+
+    ctx.restore();
+  },
+
   translate: ([x, y], children = []) => (ctx, render) => {
     ctx.save();
     ctx.translate(x, y);
@@ -101,6 +110,7 @@ export const radialGradient = (targetProp, innerPosition, innerRadius, outerPosi
 
 export const clear = () => makeOp('clear', [], []);
 export const rectFill = ([x, y], [w, h]) => makeOp('rectFill', { p: [x, y], s: [w, h] }, []);
+export const scale = ([w, h], children) => makeOp('scale', [w, h], children);
 export const translate = ([x, y], children) => makeOp('translate', [x, y], children);
 export const rotate = (radians, children) => makeOp('rotate', radians, children);
 
