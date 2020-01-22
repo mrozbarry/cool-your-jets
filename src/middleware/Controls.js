@@ -1,4 +1,5 @@
 import BaseMiddleware from '#/middleware/Base';
+import GamepadInput from '#/inputs/Gamepad';
 
 const defaultState = {
   up: 0,
@@ -38,6 +39,13 @@ export default class Controls extends BaseMiddleware {
   }
 
   tickStart(game) {
+    for(const input of Object.values(this.inputs)) {
+      if (!(input instanceof GamepadInput)) continue;
+
+      input.update();
+    }
+
+
     const particles = game.getMiddleware('particles');
     const projectiles = game.getMiddleware('projectiles');
     const keyState = game.controls.snapshot();
