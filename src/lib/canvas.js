@@ -43,6 +43,10 @@ const OP = {
   clear: () => (ctx) => ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height),
 
   rectFill: ({ p, s }) => (ctx) => ctx.fillRect(p[0], p[1], s[0], s[1]),
+  rectStroke: ({ p, s }) => (ctx) => ctx.strokeRect(p[0], p[1], s[0], s[1]),
+
+  save: () => (ctx) => ctx.save(),
+  restore: () => (ctx) => ctx.restore(),
 
   scale: ([w, h], children = []) => (ctx, render) => {
     ctx.save();
@@ -73,6 +77,14 @@ const OP = {
 
   beginPath: callOp('beginPath'),
   closePath: callOp('closePath'),
+  clip: (path, children = []) => (ctx) => {
+    ctx.save();
+    ctx.clip(path);
+
+    render(children, ctx);
+
+    ctx.restore();
+  },
 
   moveTo: coordOp('moveTo'),
   lineTo: coordOp('lineTo'),
@@ -108,14 +120,26 @@ export const radialGradient = (targetProp, innerPosition, innerRadius, outerPosi
   makeOp('radialGradient', { targetProp, innerPosition, innerRadius, outerPosition, outerRadius, colorStops }, children)
 );
 
-export const clear = () => makeOp('clear', [], []);
+export const save = () => makeOp('save');
+export const restore = () => makeOp('restore');
+
+export const restorable = (children) => [
+  save(),
+  children,
+  restore(),
+];
+
+export const clear = () => makeOp('clear');
+
 export const rectFill = ([x, y], [w, h]) => makeOp('rectFill', { p: [x, y], s: [w, h] }, []);
+export const rectStroke = ([x, y], [w, h]) => makeOp('rectStroke', { p: [x, y], s: [w, h] }, []);
 export const scale = ([w, h], children) => makeOp('scale', [w, h], children);
 export const translate = ([x, y], children) => makeOp('translate', [x, y], children);
 export const rotate = (radians, children) => makeOp('rotate', radians, children);
 
 export const beginPath = () => makeOp('beginPath');
 export const closePath = () => makeOp('closePath');
+export const clip = (path, children) => makeOp('clip', path, children);
 
 export const path = ({ close, after = stroke }, children) => [
   beginPath(),

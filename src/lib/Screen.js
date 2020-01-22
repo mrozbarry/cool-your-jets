@@ -22,33 +22,36 @@ export default class Screen {
     this.container = document.querySelector('game-container');
     this.width = width;
     this.height = height;
-    this.canvases = [];
+
+    const element = document.createElement('canvas');
+    this.container.appendChild(element);
+    this.canvas = new Canvas(this, element);
+    this.resize();
+
 
     window.addEventListener('resize', () => {
       this.resize();
     });
   }
 
-  add() {
-    const element = document.createElement('canvas');
-    this.container.appendChild(element);
-    const canvas = new Canvas(this, element);
-    this.canvases.push(canvas);
-    this.resize();
-    return canvas;
+  divide(count) {
+    const columns = Math.max(1, Math.min(2, count));
+    const rows = Math.ceil(count / columns);
+
+    const availableWidth = (this.canvas.element.width / columns);
+    const availableHeight = (this.canvas.element.height / rows);
+
+    return Array.from({ length: count }, (_, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      const x = column * availableWidth;
+      const y = row * availableHeight;
+
+      return { x, y, w: availableWidth, h: availableHeight };
+    });
   }
 
   resize() {
-    const count = this.canvases.length;
-    const columns = Math.min(2, count);
-    const rows = 2; // Math.min(1, Math.floor(count / 2))
-    const availableWidth = (window.innerWidth / columns) - 5;
-    const availableHeight = (window.innerHeight / rows) - 5;
-    for(const canvas of this.canvases) {
-      canvas.resize(
-        availableWidth,
-        availableHeight * ASPECT_RATIO,
-      );
-    }
+    this.canvas.resize(window.innerWidth, window.innerHeight);
   }
 }
