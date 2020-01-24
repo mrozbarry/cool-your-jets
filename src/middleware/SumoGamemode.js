@@ -2,6 +2,7 @@ import Base from './Base';
 import p2 from 'p2';
 import * as collisions from '#/collisions';
 import { properties, circleStroke } from '#/lib/canvas';
+import AudioControl from '#/lib/audio';
 
 export default class SumoGamemode extends Base {
   constructor(radius, seconds) {
@@ -72,6 +73,9 @@ export default class SumoGamemode extends Base {
     ];
   }
 
+  renderOverlay() {
+  }
+
   tickStart(_game, delta) {
     if (this.done) return;
     this.time[0] += (delta * 1000);
@@ -84,8 +88,13 @@ export default class SumoGamemode extends Base {
     if (this.lastOneAt === null && shipsAlive.length === 1) {
       this.lastOneAt = game.currentTime + 1000;
     } else if (shipsAlive.length === 1 && game.currentTime >= this.lastOneAt) {
-      this.winner = shipsAlive[0];
-      this.done = true;
+      if (!this.done) {
+        this.winner = shipsAlive[0];
+        this.done = true;
+        game.getMiddleware('controls').enabled = false;
+        AudioControl.stop();
+        AudioControl.playLoop('game-winner');
+      }
     } else if (shipsAlive.length === 0) {
       this.done = true;
     }

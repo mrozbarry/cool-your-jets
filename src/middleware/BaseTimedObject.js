@@ -1,10 +1,9 @@
 import Base from '#/middleware/Base';
 
 export default class BaseTimedObject extends Base {
-  constructor(world) {
+  constructor() {
     super();
 
-    this.world = world;
     this.items = [];
     this.pendingRemoves = [];
   }
@@ -12,6 +11,10 @@ export default class BaseTimedObject extends Base {
   add(item) {
     this.items.push(item);
     return item;
+  }
+
+  init(game) {
+    this.world = game.world;
   }
 
   tickStart(_, delta) {

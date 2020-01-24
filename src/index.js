@@ -2,8 +2,8 @@ import render from '#/lib/canvas';
 import scene, { defaultCollections } from '#/scenes/withFocus';
 import Particles from '#/middleware/Particles';
 import Projectiles from '#/middleware/Projectiles';
-//import SumoGamemode from '#/middleware/SumoGamemode';
-import FreeGamemode from '#/middleware/FreeGamemode';
+import SumoGamemode from '#/middleware/SumoGamemode';
+//import FreeGamemode from '#/middleware/FreeGamemode';
 import KeyboardInput from '#/inputs/Keyboard';
 import GamepadInput from '#/inputs/Gamepad';
 import Game from '#/models/Game';
@@ -17,8 +17,8 @@ export const main = (playerConfigs) => {
   const game = new Game(1 / 60);
   const particles = game.addMiddleware('particles', new Particles(game.world));
   const projectiles = game.addMiddleware('projectiles', new Projectiles(game.world));
-  //const gameMode = game.addMiddleware('gamemode', new SumoGamemode(500, 60));
-  const gameMode = game.addMiddleware('gamemode', new FreeGamemode());
+  const gameMode = game.addMiddleware('gamemode', new SumoGamemode(500, 60));
+  //const gameMode = game.addMiddleware('gamemode', new FreeGamemode());
 
   const keyboardInputMap = {
     wasd: KeyboardInput.WASD(),

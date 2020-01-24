@@ -19,7 +19,7 @@ export const defaultCollections = ({ ships, particles, projectiles }) => {
     collections.push({
       collection: ships,
       fn: (s) => [
-        infoComponent(s),
+        s.alive && infoComponent(s),
         shipComponent(s)
       ],
     });

@@ -27,6 +27,7 @@ export default class Projectiles extends BaseTimedObjectMiddleware {
       life: [0, 3],
     };
 
+    body._isShip = true;
     this.world.addBody(projectile.body);
 
     return super.add(projectile);

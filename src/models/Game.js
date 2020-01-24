@@ -22,7 +22,7 @@ export default class Game {
     this.controls = new Controls();
 
     this.middleware = [{ name: 'controls', instance: this.controls }];
-    this.timestep = timestep || (1 / 60);
+    this.timestep = timestep || (1 / 30);
     this.thrustForce = Math.abs(thrustForce || 600);
     this.turnVelocity = Math.abs(turnVelocity || 100);
     this.fireLockDelay = Math.abs(fireLockDelay || 300);
@@ -88,24 +88,28 @@ export default class Game {
 
   runMiddlewareTickStart(delta) {
     for(const m of this.middleware) {
+      if (!m.instance.enabled) continue;
       m.instance.tickStart(this, delta);
     }
   }
 
   runMiddlewarePreStep() {
     for(const m of this.middleware) {
+      if (!m.instance.enabled) continue;
       m.instance.preStep(this, this.timestep);
     }
   }
 
   runMiddlewarePostStep() {
     for(const m of this.middleware) {
+      if (!m.instance.enabled) continue;
       m.instance.postStep(this, this.timestep);
     }
   }
 
   runMiddlewareTickEnd(delta) {
     for(const m of this.middleware) {
+      if (!m.instance.enabled) continue;
       m.instance.tickEnd(this, delta);
     }
   }

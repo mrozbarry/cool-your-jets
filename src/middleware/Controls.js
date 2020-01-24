@@ -1,5 +1,6 @@
 import BaseMiddleware from '#/middleware/Base';
 import GamepadInput from '#/inputs/Gamepad';
+import AudioControl from '#/lib/audio';
 
 const defaultState = {
   up: 0,
@@ -69,8 +70,8 @@ export default class Controls extends BaseMiddleware {
       if (down && game.currentTime > ship.fireLock) {
         projectiles.add(game, ship.body);
         ship.fireLock = game.currentTime + game.fireLockDelay;
+        AudioControl.playSfx('laser');
       }
-
     }
   }
 

@@ -1,8 +1,20 @@
 import BaseTimedObjectMiddleware from '#/middleware/BaseTimedObject';
 import p2 from 'p2';
 import * as collisions from '#/collisions';
+import AudioControl from '#/lib/audio';
 
 export default class Projectiles extends BaseTimedObjectMiddleware {
+  init(game) {
+    super.init(game);
+
+    game.world.on('beginContact', (event) => {
+      const bodies = [event.bodyA, event.bodyB];
+      if (bodies.some(b => b._isLaser) && bodies.some(b => b._isShip)) {
+        AudioControl.playSfx('laser-bounce');
+      }
+    });
+  }
+
   add(game, parentBody) {
     const position = [0, 0];
     parentBody.toWorldFrame(position, [0, -30]);
@@ -11,7 +23,7 @@ export default class Projectiles extends BaseTimedObjectMiddleware {
       position,
       velocity: parentBody.velocity,
       angle: parentBody.angle,
-      // fixedRotation: true,
+      fixedRotation: true,
     });
 
     const shape = new p2.Box({
@@ -26,6 +38,8 @@ export default class Projectiles extends BaseTimedObjectMiddleware {
       body,
       life: [0, 3],
     };
+
+    projectile.body._isLaser = true;
 
     this.world.addBody(projectile.body);
 
