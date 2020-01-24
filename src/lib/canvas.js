@@ -37,7 +37,7 @@ const OP = {
 
   scale: ([w, h], children = []) => (ctx, render) => {
     ctx.save();
-    ctx.scale(int(w), int(h));
+    ctx.scale(w, h);
 
     render(children, ctx);
 

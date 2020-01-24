@@ -9,6 +9,10 @@ export class Canvas {
     this.resize = debounce((width, height) => {
       this.element.width = width; // * window.devicePixelRatio;
       this.element.height = height; // * window.devicePixelRatio;
+      console.log('divided screen', {
+        screens: this.screen.divide(4),
+        size: [this.element.width, this.element.height],
+      });
     });
   }
 
