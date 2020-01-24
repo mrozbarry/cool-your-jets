@@ -56,7 +56,7 @@ export default class Gamepad {
     this.notifier('up', Math.abs(Math.min(0, axis(gamepad.axes[1]))));
     this.notifier('right', Math.abs(Math.max(0, gamepad.axes[2])));
     this.notifier('left', Math.abs(Math.min(0, gamepad.axes[2])));
-    this.notifier('down', Math.max(1, gamepad.buttons[9].value));
+    this.notifier('down', Math.min(1, gamepad.buttons[9].value));
   }
 
   connectGamepad(event) {
