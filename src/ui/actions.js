@@ -1,13 +1,22 @@
-export const Initialize = () => ({
-  hasGamepads: false,
-  players: Array.from({ length: 4 }, (_, index) => ({
-    controls: index === 0 ? 'keyboard|wasd' : '',
-    name: `Player ${index + 1}`,
-    readyAt: null,
-  })),
-  playGame: false,
-  gameCountdown: null,
-});
+import * as effects from '#/ui/effects';
+
+const makePlayer = (controls, name, ready = false) => ({ controls, name, ready });
+const initialPlayers = [
+  makePlayer('keyboard|wasd', 'Player 1'),
+  makePlayer('keyboard|arrows', 'Player 2'),
+  makePlayer('', 'Player 3'),
+  makePlayer('', 'Player 4'),
+];
+
+export const Initialize = () => [
+  {
+    hasGamepads: false,
+    players: initialPlayers,
+    playGame: false,
+    gameCountdown: null,
+  },
+  effects.PlayLoop('menu'),
+];
 
 export const GameCountdown = (state, { remaining }) => ({
   ...state,
@@ -38,6 +47,9 @@ export const PlayerName = (state, { index, name }) => ({
   }),
 });
 
-export const PlayGame = state => ({ ...state, playGame: true });
+export const PlayGame = state => [
+  { ...state, playGame: true },
+  effects.PlayLoop('game'),
+];
 
 export const GamepadConnected = state => ({ ...state, hasGamepads: true });

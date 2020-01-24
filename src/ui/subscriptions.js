@@ -1,4 +1,5 @@
-import { main } from '../index';
+import { main } from '#/index';
+import AudioControl from '#/lib/audio';
 
 const StartGameFX = (dispatch, { count, onStart, onTick }) => {
   let remaining = count;
@@ -40,8 +41,10 @@ const RunGameFX = (_, { players }) => {
 
   const testDom = () => {
     if (document.querySelector('game-container')) {
-      cancel = main(players);
-      return;
+      return AudioControl.waitForLoad()
+        .then(() => {
+          cancel = main(players);
+        });
     }
     setTimeout(testDom, 100);
   };
