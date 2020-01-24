@@ -12,9 +12,7 @@
     "esm": "^3.2.25",
     "express": "^4.17.1",
     "hyperapp": "^2.0.3",
-    "p2": "^0.7.1",
-    "planck-js": "^0.3.12",
-    "tone": "^13.8.25"
+    "p2": "^0.7.1"
   },
   "devDependencies": {
     "@types/matter-js": "^0.10.7",
