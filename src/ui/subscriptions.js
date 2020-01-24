@@ -8,13 +8,15 @@ const StartGameFX = (dispatch, { count, onStart, onTick }) => {
     if (remaining === 0) {
       dispatch(onStart);
     } else {
-      remaining -= 1;
       dispatch(onTick, { remaining });
+      remaining -= 1;
       handle = setTimeout(tick, 1000);
     }
   };
 
-  handle = setTimeout(tick, 1000);
+  setTimeout(() => {
+    tick();
+  }, 1);
 
   return () => {
     clearTimeout(handle);
