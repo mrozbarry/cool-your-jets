@@ -19,18 +19,21 @@ const lock = (fn) => {
 const claimedIndexes = [];
 
 export default class Gamepad {
-  constructor(debugName) {
+  constructor(initialGamepadIndex = null) {
     this.notifier = () => {};
 
-    this.debugName = debugName;
-
-    this.gamepadIndex = null;
+    this.gamepadIndex = initialGamepadIndex;
+    if (initialGamepadIndex !== null) {
+      claimedIndexes.push(this.gamepadIndex);
+    }
 
     this.connectGamepad = this.connectGamepad.bind(this);
     this.disconnectGamepad = this.disconnectGamepad.bind(this);
 
     window.addEventListener('gamepadconnected', this.connectGamepad);
     window.addEventListener('gamepaddisconnected', this.disconnectGamepad);
+
+    this.setNotifier = this.setNotifier.bind(this);
 
     this.detach = () => {
       window.removeEventListener('gamepadconnected', this.connectGamepad);
@@ -53,7 +56,7 @@ export default class Gamepad {
     this.notifier('up', Math.abs(Math.min(0, axis(gamepad.axes[1]))));
     this.notifier('right', Math.abs(Math.max(0, gamepad.axes[2])));
     this.notifier('left', Math.abs(Math.min(0, gamepad.axes[2])));
-    this.notifier('down', gamepad.buttons[9].value);
+    this.notifier('down', Math.max(1, gamepad.buttons[9].value));
   }
 
   connectGamepad(event) {

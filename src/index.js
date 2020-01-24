@@ -1,13 +1,15 @@
 import render from '#/lib/canvas';
-import scene from '#/scenes/withFocus';
+import scene, { defaultCollections } from '#/scenes/withFocus';
 import Particles from '#/middleware/Particles';
 import Projectiles from '#/middleware/Projectiles';
+//import SumoGamemode from '#/middleware/SumoGamemode';
+import FreeGamemode from '#/middleware/FreeGamemode';
 import KeyboardInput from '#/inputs/Keyboard';
 import GamepadInput from '#/inputs/Gamepad';
 import Game from '#/models/Game';
 import Screen from '#/lib/Screen';
 
-const main = () => {
+export const main = (playerConfigs) => {
   let running = true;
 
   const screen = new Screen(1024, 768);
@@ -15,28 +17,48 @@ const main = () => {
   const game = new Game(1 / 60);
   const particles = game.addMiddleware('particles', new Particles(game.world));
   const projectiles = game.addMiddleware('projectiles', new Projectiles(game.world));
+  //const gameMode = game.addMiddleware('gamemode', new SumoGamemode(500, 60));
+  const gameMode = game.addMiddleware('gamemode', new FreeGamemode());
 
-  const players = [
-    ['WASD Boi', KeyboardInput.WASD()],
-    ['Arrow Boi', KeyboardInput.Arrows()],
-    ['TFGH Boi', new GamepadInput('first')],
-    ['IJKL Boi', new GamepadInput('second')],
-  ];
+  const keyboardInputMap = {
+    wasd: KeyboardInput.WASD(),
+    arrows: KeyboardInput.Arrows(),
+  };
+
+  const players = playerConfigs.map((config) => {
+    const [inputType, subType] = config.controls.split('|');
+    switch (inputType) {
+    case 'keyboard': return [config.name, keyboardInputMap[subType]];
+    case 'gamepad': return [config.name, new GamepadInput(Number(subType))];
+    }
+    return null;
+  }).filter(p => p);
 
   for(const details of players) {
     game.addPlayer(...details);
   }
 
+  game.init();
+
   const tick = (time) => {
     if (!running) return;
+
+    const ships = game.getShips();
+
+    const collections = gameMode.renderCollection(
+      defaultCollections({
+        particles: particles.items,
+        projectiles: projectiles.items,
+        ships,
+      }),
+    );
 
     game.step(time);
 
     render(
       scene(
         game.getShips(),
-        particles.items,
-        projectiles.items,
+        collections,
         screen,
       ),
       screen.canvas.context,
@@ -79,9 +101,3 @@ const main = () => {
     running = false;
   };
 };
-
-let cancel = main();
-
-if (module.hot) {
-  module.hot.dispose(() => cancel());
-}

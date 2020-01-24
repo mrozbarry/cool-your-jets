@@ -45,7 +45,6 @@ export default class Controls extends BaseMiddleware {
       input.update();
     }
 
-
     const particles = game.getMiddleware('particles');
     const projectiles = game.getMiddleware('projectiles');
     const keyState = game.controls.snapshot();
@@ -54,7 +53,7 @@ export default class Controls extends BaseMiddleware {
       if (!keyState[playerId]) continue;
 
       const ship = game.ships[playerId];
-      if (!ship) continue;
+      if (!ship || !ship.alive) continue;
 
       const { up, down } = keyState[playerId];
 
@@ -68,7 +67,7 @@ export default class Controls extends BaseMiddleware {
         }
       }
       if (down && game.currentTime > ship.fireLock) {
-        projectiles.add(ship.body);
+        projectiles.add(game, ship.body);
         ship.fireLock = game.currentTime + game.fireLockDelay;
       }
 
@@ -82,6 +81,7 @@ export default class Controls extends BaseMiddleware {
       if (!keyState[playerId]) continue;
 
       const ship = game.ships[playerId];
+      if (!ship || !ship.alive) continue;
       const { up, right, left } = keyState[playerId];
 
       ship.body.applyForceLocal([0, up * -game.thrustForce]);

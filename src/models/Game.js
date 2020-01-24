@@ -2,6 +2,15 @@ import p2 from 'p2';
 import Controls from '#/middleware/Controls';
 import Ship from '#/models/Ship';
 
+function *defaultSpawnGenerator() {
+  while(true) {
+    yield [
+      (Math.random() * 200) - 100,
+      (Math.random() * 200) - 100,
+    ];
+  }
+}
+
 export default class Game {
   constructor({
     timestep,
@@ -16,7 +25,7 @@ export default class Game {
     this.timestep = timestep || (1 / 60);
     this.thrustForce = Math.abs(thrustForce || 600);
     this.turnVelocity = Math.abs(turnVelocity || 100);
-    this.fireLockDelay = Math.abs(fireLockDelay || 250);
+    this.fireLockDelay = Math.abs(fireLockDelay || 300);
     this.projectileAugmentForce = Math.abs(projectileAugmentForce || 100);
 
     this.previousTime = null;
@@ -28,6 +37,8 @@ export default class Game {
       gravity: [0, 0],
     });
 
+    this.spawnGenerator = defaultSpawnGenerator();
+
     this.world.on('preStep', this.runMiddlewarePreStep.bind(this));
     this.world.on('postStep', this.runMiddlewarePostStep.bind(this));
   }
@@ -35,20 +46,28 @@ export default class Game {
   addPlayer(name, input) {
     const id = Math.random().toString(36).slice(2);
 
-    const ship = new Ship(name, [
-      100 + (Math.random() * 800),
-      100 + (Math.random() * 600),
-    ]);
+    const ship = new Ship(name, this.spawnGenerator.next().value);
 
     this.ships[id] = ship;
     this.controls.add(id, input);
     this.world.addBody(ship.body);
 
-    return { id, ship };
+    return { id, ship, input };
+  }
+
+  killPlayer(body) {
+    const ship = this.getShipFromBody(body);
+    if (!ship) return;
+    ship.alive = false;
+    this.world.removeBody(ship.body);
   }
 
   getShips() { return Object.values(this.ships); }
   getPlayerIds() { return Object.keys(this.ships); }
+  getShipFromBody(body) {
+    return this.getShips()
+      .find(ship => ship.body === body);
+  }
 
   addMiddleware(name, instance) {
     this.middleware.push({ name, instance });
@@ -59,6 +78,12 @@ export default class Game {
     const m = this.middleware.find(m => m.name === name);
     if (!m) return null;
     return m.instance;
+  }
+
+  init() {
+    for(const m of this.middleware) {
+      m.instance.init(this);
+    }
   }
 
   runMiddlewareTickStart(delta) {

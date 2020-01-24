@@ -3,15 +3,15 @@ import p2 from 'p2';
 import * as collisions from '#/collisions';
 
 export default class Projectiles extends BaseTimedObjectMiddleware {
-  add(game, parentBody) {
+  add(parentBody) {
     const position = [0, 0];
-    parentBody.toWorldFrame(position, [0, -30]);
+    parentBody.toWorldFrame(position, [0, -25]);
     const body = new p2.Body({
-      mass: 2,
+      mass: 1,
       position,
       velocity: parentBody.velocity,
       angle: parentBody.angle,
-      // fixedRotation: true,
+      fixedRotation: true,
     });
 
     const shape = new p2.Box({

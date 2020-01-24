@@ -15,6 +15,8 @@ const coordOp = (key) => ([x, y]) => (ctx) => {
   ctx[key](x, y);
 };
 
+const int = v => (v + 0.5) | 0;
+
 const OP = {
   strokeStyle: styleOp('strokeStyle'),
   fillStyle: styleOp('fillStyle'),
@@ -25,32 +27,17 @@ const OP = {
   textAlign: styleOp('textAlign'),
   textBaseline: styleOp('textBaseline'),
 
-  radialGradient: ({ targetProp, innerPosition, innerRadius, outerPosition, outerRadius, colorStops }, children) => (ctx) => {
-    ctx.save();
-    const gradient = ctx.createRadialGradient(
-      innerPosition[0], innerPosition[1], innerRadius,
-      outerPosition[0], outerPosition[1], outerRadius,
-    );
-    colorStops.forEach(cs => gradient.addColorStop(...cs));
-
-    ctx[targetProp] = gradient;
-
-    render(children, ctx);
-
-    ctx.restore();
-  },
-
   clear: () => (ctx) => ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height),
 
-  rectFill: ({ p, s }) => (ctx) => ctx.fillRect(p[0], p[1], s[0], s[1]),
-  rectStroke: ({ p, s }) => (ctx) => ctx.strokeRect(p[0], p[1], s[0], s[1]),
+  rectFill: ({ p, s }) => (ctx) => ctx.fillRect(int(p[0]), int(p[1]), int(s[0]), int(s[1])),
+  rectStroke: ({ p, s }) => (ctx) => ctx.strokeRect(int(p[0]), int(p[1]), int(s[0]), int(s[1])),
 
   save: () => (ctx) => ctx.save(),
   restore: () => (ctx) => ctx.restore(),
 
   scale: ([w, h], children = []) => (ctx, render) => {
     ctx.save();
-    ctx.scale(w, h);
+    ctx.scale(int(w), int(h));
 
     render(children, ctx);
 
@@ -59,7 +46,7 @@ const OP = {
 
   translate: ([x, y], children = []) => (ctx, render) => {
     ctx.save();
-    ctx.translate(x, y);
+    ctx.translate(int(x), int(y));
 
     render(children, ctx);
 
@@ -90,18 +77,18 @@ const OP = {
   lineTo: coordOp('lineTo'),
 
   arc: ({ position: [x, y], radius, startAngle, endAngle, antiClockwise }) => (ctx) => {
-    ctx.arc(x, y, radius, startAngle, endAngle, antiClockwise);
+    ctx.arc(int(x), int(y), radius, startAngle, endAngle, antiClockwise);
   },
 
   stroke: callOp('stroke'),
   fill: callOp('fill'),
 
   textFill: ({ position: [x, y], text }) => ctx => {
-    ctx.fillText(text, x, y);
+    ctx.fillText(text, int(x), int(y));
   },
 
   textStroke: ({ position: [x, y], text }) => ctx => {
-    ctx.strokeText(text, x, y);
+    ctx.strokeText(text, int(x), int(y));
   },
 };
 

@@ -5,8 +5,9 @@ import * as collisions from '#/collisions';
 export default class Particles extends BaseTimedObjectMiddleware {
   add([x, y], type, totalLife) {
     const body = new p2.Body({
-      mass: 5,
+      mass: 0.5,
       position: [x, y],
+      sleepTimeLimit: 0.2
     });
 
     const shape = new p2.Particle({

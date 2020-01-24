@@ -1,7 +1,5 @@
 import debounce from '#/lib/debounce';
 
-const ASPECT_RATIO = 9 / 10;
-
 export class Canvas {
   constructor(screen, canvasElement) {
     this.screen = screen;
@@ -22,6 +20,7 @@ export default class Screen {
     this.container = document.querySelector('game-container');
     this.width = width;
     this.height = height;
+    this.aspectRatio = this.height / this.width;
 
     const element = document.createElement('canvas');
     this.container.appendChild(element);
@@ -39,7 +38,10 @@ export default class Screen {
     const rows = Math.ceil(count / columns);
 
     const availableWidth = (this.canvas.element.width / columns);
-    const availableHeight = (this.canvas.element.height / rows);
+    const availableHeight = Math.min(
+      (this.canvas.element.height / rows),
+      availableWidth * this.aspectRatio,
+    );
 
     return Array.from({ length: count }, (_, index) => {
       const column = index % columns;

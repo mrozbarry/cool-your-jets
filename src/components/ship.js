@@ -20,19 +20,19 @@ const ship = (shipObject, lineWidth, color) => {
   );
 };
 
-const maybeRender = () => Math.random() > 0.1;
+const maybeRender = (v) => Math.random() > v;
 
 export default (shipObject) => {
   const position = Array.from(shipObject.body.interpolatedPosition);
   const angle = shipObject.body.interpolatedAngle;
+  const color = (alpha, alive) => `hsla(0, 0%, ${alive ? '100%' : '20%'}, ${alpha})`;
 
   return translate(position, [
     rotate(angle, [
-      maybeRender() && ship(shipObject, 14, 'rgba(255, 255, 255, 0.1)'),
-      maybeRender() && ship(shipObject, 11, 'rgba(255, 255, 255, 0.1)'),
-      maybeRender() && ship(shipObject, 8, 'rgba(255, 255, 255, 0.1)'),
-      maybeRender() && ship(shipObject, 5, 'rgba(255, 255, 255, 0.1)'),
-      ship(shipObject, 2, 'rgba(255, 255, 255, 1)'),
+      maybeRender(0.3) && ship(shipObject, 11, color(0.1, shipObject.alive)),
+      maybeRender(0.3) && ship(shipObject, 8, color(0.1, true)),
+      maybeRender(0.3) && ship(shipObject, 5, color(0.1, shipObject.alive)),
+      ship(shipObject, 2, color(1, shipObject.alive)),
     ]),
   ]);
 };

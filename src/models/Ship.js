@@ -36,9 +36,12 @@ export default class Ship {
 
     this.fireLock = 0;
 
+    this.alive = true;
+
     // deprecated
     this.shields = 1.0;
     this.power = 'ssslllttt';
+
   }
 
   position([x, y]) {
