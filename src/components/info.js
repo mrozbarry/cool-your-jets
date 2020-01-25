@@ -1,4 +1,4 @@
-import { properties, textStroke, textFill, translate, path, moveTo, lineTo, stroke } from '#/lib/canvas';
+import { properties, textStroke, textFill, translate, path, moveTo, lineTo, stroke, restorable } from '#/lib/canvas';
 
 const maybeRender = (v = 0.1) => Math.random() > v;
 
@@ -21,9 +21,9 @@ const text = ([x, y], text, lineWidth, style) => {
 };
 
 const fuzzyText = (ship) => [
-  maybeRender(0.6) && text([-30, -70], ship.name, 3, 'hsla(0, 100%, 100%, 0.3)'),
-  maybeRender(0.6) && text([-30, -70], ship.name, 2, 'hsla(0, 100%, 100%, 0.3)'),
-  maybeRender(0) && text([-30, -70], ship.name, 1, 'hsla(0, 100%, 100%, 1.0)'),
+  //maybeRender(0.6) && text([-30, -70], ship.name, 3, 'hsla(0, 100%, 100%, 0.3)'),
+  //maybeRender(0.6) && text([-30, -70], ship.name, 2, 'hsla(0, 100%, 100%, 0.3)'),
+  text([-30, -70], ship.name, 1, 'hsla(0, 100%, 100%, 1.0)'),
 ];
 
 const bar = ([x, y], [w], lineWidth, strokeStyle) => properties({
@@ -66,19 +66,19 @@ const infoLine = (points, lineWidth, strokeStyle) => {
 };
 
 const fuzzyInfoLine = (points) => [
-  maybeRender(0.5) && infoLine(points, 4, 'hsla(0, 100%, 100%, 0.1)'),
+  // maybeRender(0.5) && infoLine(points, 4, 'hsla(0, 100%, 100%, 0.1)'),
   infoLine(points, 1, 'hsla(0, 100%, 100%, 1)'),
 ];
 
 export default (ship) => {
-  const items = ship.power.split('');
-  const total = items.length - 2;
+  //const items = ship.power.split('');
+  //const total = items.length - 2;
 
-  const shield = items.filter(p => p === 's').length / total;
-  const thruster = items.filter(p => p === 't').length / total;
-  const laser = items.filter(p => p === 'l').length / total;
+  //const shield = items.filter(p => p === 's').length / total;
+  //const thruster = items.filter(p => p === 't').length / total;
+  //const laser = items.filter(p => p === 'l').length / total;
 
-  return translate(ship.body.interpolatedPosition, [
+  return restorable(translate(ship.body.interpolatedPosition, [
     fuzzyInfoLine([
       [-60, 0],
       [-70, 0],
@@ -86,8 +86,8 @@ export default (ship) => {
       [-40, -60],
     ]),
     fuzzyText(ship),
-    fuzzyPercentBar([-30, -52], [60], shield, 180),
-    fuzzyPercentBar([-30, -49], [60], thruster, 30),
-    fuzzyPercentBar([-30, -46], [60], laser, 0),
-  ]);
+    //fuzzyPercentBar([-30, -52], [60], shield, 180),
+    //fuzzyPercentBar([-30, -49], [60], thruster, 30),
+    //fuzzyPercentBar([-30, -46], [60], laser, 0),
+  ]));
 };

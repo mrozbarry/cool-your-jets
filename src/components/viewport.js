@@ -1,12 +1,9 @@
-import { translate, clip, scale } from '#/lib/canvas';
+import { translate, clip, scale, restorable } from '#/lib/canvas';
 
-export default ({ offset, pixelSize, virtualSize }, children) => {
-  const path = new Path2D();
-  path.rect(0, 0, pixelSize[0], pixelSize[1]);
-
+export default ({ offset, pixelSize, virtualSize, path }, children) => {
   const scaling = virtualSize.map((v, i) => pixelSize[i] / v);
 
-  return translate(offset, [
+  return restorable(translate(offset, [
     clip(path, scale(scaling, children)),
-  ]);
+  ]));
 };

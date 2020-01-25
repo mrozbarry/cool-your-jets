@@ -30,16 +30,20 @@ export const defaultCollections = ({ ships, particles, projectiles }) => {
 
 export default (ships, collections, screen) => {
   const size = [screen.width, screen.height];
-
   const portals = screen.divide(ships.length);
+  const { w, h } = portals[0]
+  const path = new Path2D();
+  path.rect(0, 0, w, h);
 
-  return portals.map(({ x, y, w, h }, index) => {
+
+  return portals.map(({ x, y }, index) => {
     const ship = ships[index];
 
     return viewportComponent({
       offset: [x, y],
       pixelSize: [w, h],
       virtualSize: size,
+      path,
     }, singlePlayerScene(ship, collections, screen));
   });
 };

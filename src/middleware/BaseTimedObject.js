@@ -18,21 +18,24 @@ export default class BaseTimedObject extends Base {
   }
 
   tickStart(_, delta) {
-    this.items = this.items.reduce((list, item) => {
+    const nextItems = [];
+    let item;
+    for(item of this.items) {
       item.life[0] += delta;
-
       if (item.life[0] > item.life[1]) {
         this.pendingRemoves.push(item);
-        return list;
+        continue;
       }
-
-      return list.concat(item);
-    }, []);
+      nextItems.push(item);
+    }
+    this.items = nextItems;
   }
 
   tickEnd(game) {
-    for(const item of this.pendingRemoves) {
+    let item;
+    for(item of this.pendingRemoves) {
       game.world.removeBody(item.body);
     }
+    this.pendingRemoves = [];
   }
 }

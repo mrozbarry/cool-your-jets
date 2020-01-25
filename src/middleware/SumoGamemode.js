@@ -79,8 +79,7 @@ export default class SumoGamemode extends Base {
   tickStart(_game, delta) {
     if (this.done) return;
     this.time[0] += (delta * 1000);
-    const percent = 1.0 - Math.min(1, this.time[0] / this.time[1]);
-    this.ring.shape.radius = this.radius * percent;
+    this.ring.shape.radius = this.radius * (1.0 - Math.min(1, this.time[0] / this.time[1]));
   }
 
   tickEnd(game) {

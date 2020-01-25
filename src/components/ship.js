@@ -1,4 +1,4 @@
-import { polygonStroke, properties, rotate, translate } from '#/lib/canvas';
+import { polygonStroke, properties, rotate, translate, restorable } from '#/lib/canvas';
 
 const ship = (shipObject, lineWidth, color) => {
   const vertices = shipObject.shapes.hull.vertices
@@ -27,12 +27,12 @@ export default (shipObject) => {
   const angle = shipObject.body.interpolatedAngle;
   const color = (alpha, alive) => `hsla(0, 0%, ${alive ? '100%' : '20%'}, ${alpha})`;
 
-  return translate(position, [
+  return restorable(translate(position, [
     rotate(angle, [
-      maybeRender(0.3) && ship(shipObject, 11, color(0.1, shipObject.alive)),
-      maybeRender(0.3) && ship(shipObject, 8, color(0.1, true)),
-      maybeRender(0.3) && ship(shipObject, 5, color(0.1, shipObject.alive)),
+      //maybeRender(0.3) && ship(shipObject, 11, color(0.1, shipObject.alive)),
+      //maybeRender(0.3) && ship(shipObject, 8, color(0.1, true)),
+      //maybeRender(0.3) && ship(shipObject, 5, color(0.1, shipObject.alive)),
       ship(shipObject, 2, color(1, shipObject.alive)),
     ]),
-  ]);
+  ]));
 };

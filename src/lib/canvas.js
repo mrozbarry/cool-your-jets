@@ -1,21 +1,16 @@
 const styleOp = (key) => (value, children) => (ctx) => {
-  ctx.save();
   ctx[key] = value;
 
-  render(children, ctx);
-
-  ctx.restore();
+  return children;
 };
 
 const callOp = (key) => () => (ctx) => {
   ctx[key]();
 };
 
-const coordOp = (key) => ([x, y]) => (ctx) => {
-  ctx[key](x, y);
+const coordOp = (key) => (coord) => (ctx) => {
+  ctx[key](coord[0], coord[1]);
 };
-
-const int = v => (v + 0.5) | 0;
 
 const OP = {
   strokeStyle: styleOp('strokeStyle'),
@@ -29,66 +24,58 @@ const OP = {
 
   clear: () => (ctx) => ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height),
 
-  rectFill: ({ p, s }) => (ctx) => ctx.fillRect(int(p[0]), int(p[1]), int(s[0]), int(s[1])),
-  rectStroke: ({ p, s }) => (ctx) => ctx.strokeRect(int(p[0]), int(p[1]), int(s[0]), int(s[1])),
+  rectFill: (props) => (ctx) => (
+    ctx.fillRect(props.x, props.y, props.w, props.h)
+  ),
+  rectStroke: (props) => (ctx) => (
+    ctx.strokeRect(props.x, props.y, props.w, props.h)
+  ),
 
   save: () => (ctx) => ctx.save(),
   restore: () => (ctx) => ctx.restore(),
 
-  scale: ([w, h], children = []) => (ctx, render) => {
-    ctx.save();
+  scale: ([w, h], children = []) => (ctx) => {
     ctx.scale(w, h);
 
-    render(children, ctx);
-
-    ctx.restore();
+    return children;
   },
 
   translate: ([x, y], children = []) => (ctx, render) => {
-    ctx.save();
-    ctx.translate(int(x), int(y));
+    ctx.translate(x, y);
 
-    render(children, ctx);
-
-    ctx.restore();
+    return children;
   },
 
   rotate: (radians, children = []) => (ctx, render) => {
-    ctx.save();
     ctx.rotate(radians);
 
-    render(children, ctx);
-
-    ctx.restore();
+    return children;
   },
 
   beginPath: callOp('beginPath'),
   closePath: callOp('closePath'),
   clip: (path, children = []) => (ctx) => {
-    ctx.save();
     ctx.clip(path);
 
-    render(children, ctx);
-
-    ctx.restore();
+    return children;
   },
 
   moveTo: coordOp('moveTo'),
   lineTo: coordOp('lineTo'),
 
   arc: ({ position: [x, y], radius, startAngle, endAngle, antiClockwise }) => (ctx) => {
-    ctx.arc(int(x), int(y), radius, startAngle, endAngle, antiClockwise);
+    ctx.arc((x), (y), radius, startAngle, endAngle, antiClockwise);
   },
 
   stroke: callOp('stroke'),
   fill: callOp('fill'),
 
   textFill: ({ position: [x, y], text }) => ctx => {
-    ctx.fillText(text, int(x), int(y));
+    ctx.fillText(text, (x), (y));
   },
 
   textStroke: ({ position: [x, y], text }) => ctx => {
-    ctx.strokeText(text, int(x), int(y));
+    ctx.strokeText(text, (x), (y));
   },
 };
 
@@ -118,11 +105,23 @@ export const restorable = (children) => [
 
 export const clear = () => makeOp('clear');
 
-export const rectFill = ([x, y], [w, h]) => makeOp('rectFill', { p: [x, y], s: [w, h] }, []);
-export const rectStroke = ([x, y], [w, h]) => makeOp('rectStroke', { p: [x, y], s: [w, h] }, []);
+export const rectFill = ([x, y], [w, h]) => makeOp('rectFill', { x, y, w, h }, []);
+export const rectStroke = ([x, y], [w, h]) => makeOp('rectStroke', { x, y, w, h }, []);
 export const scale = ([w, h], children) => makeOp('scale', [w, h], children);
 export const translate = ([x, y], children) => makeOp('translate', [x, y], children);
 export const rotate = (radians, children) => makeOp('rotate', radians, children);
+
+export const withRestore = (fn) => {
+  return [
+    save(),
+    fn({
+      scale,
+      translate,
+      rotate,
+    }),
+    restore(),
+  ];
+};
 
 export const beginPath = () => makeOp('beginPath');
 export const closePath = () => makeOp('closePath');
@@ -153,7 +152,7 @@ export const polygonStroke = (points) => {
 
   return path({ close: true, after: stroke }, [
     moveTo(first),
-    ...tail.map(point => lineTo(point)),
+    tail.map(point => lineTo(point)),
   ]);
 };
 
@@ -183,19 +182,14 @@ const render = (operations, ctx) => {
     .concat(operations)
     .filter(Boolean);
 
-  for(const opDef of operationList) {
+  let opDef;
+  for(opDef of operationList) {
     if (Array.isArray(opDef)) {
       render(opDef, ctx);
     } else {
       const { cmd, props, children } = opDef;
       const op = OP[cmd];
-      try {
-        op(props, children)(ctx, render);
-      } catch (err) {
-        console.log('opDef', opDef);
-        console.log('OP[]', op);
-        throw err;
-      }
+      render(op(props, children)(ctx), ctx);
     }
   }
 };

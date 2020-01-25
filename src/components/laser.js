@@ -40,9 +40,9 @@ export default (projectile) => {
   const shape = projectile.body.shapes[0];
 
   return lineCap('round', [
-    maybeRender() && laser(position, shape.height * 1.6, direction, shape.width * 3, 'hsla(0, 63%, 54%, 0.2)'),
-    maybeRender() && laser(position, shape.height * 1.4, direction, shape.width * 2.5, 'hsla(0, 63%, 54%, 0.2)'),
-    maybeRender() && laser(position, shape.height * 1.2, direction, shape.width * 2, 'hsla(0, 63%, 54%, 0.2)'),
+    //maybeRender() && laser(position, shape.height * 1.6, direction, shape.width * 3, 'hsla(0, 63%, 54%, 0.2)'),
+    //maybeRender() && laser(position, shape.height * 1.4, direction, shape.width * 2.5, 'hsla(0, 63%, 54%, 0.2)'),
+    //maybeRender() && laser(position, shape.height * 1.2, direction, shape.width * 2, 'hsla(0, 63%, 54%, 0.2)'),
     laser(position, shape.height, direction, shape.width, 'hsla(0, 63%, 70%, 0.8)'),
   ]);
 };

@@ -41,9 +41,7 @@ export default class Controls extends BaseMiddleware {
 
   tickStart(game) {
     for(const input of Object.values(this.inputs)) {
-      if (!(input instanceof GamepadInput)) continue;
-
-      input.update();
+      input.pumpEvents();
     }
 
     const particles = game.getMiddleware('particles');

@@ -1,4 +1,4 @@
-import { rectFill, rectStroke, properties, translate } from '#/lib/canvas';
+import { rectFill, rectStroke, properties, translate, restorable } from '#/lib/canvas';
 
 export default (ship, collections, screen) => {
   const size = [screen.width, screen.height];
@@ -17,9 +17,9 @@ export default (ship, collections, screen) => {
       rectStroke([0, 0], size),
     ]),
 
-    translate(centerOnShip, (
+    restorable(translate(centerOnShip, (
       collections.map(({ collection, fn }) => collection.map(fn))
-    )),
+    ))),
   ];
 };
 

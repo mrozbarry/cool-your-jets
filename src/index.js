@@ -1,4 +1,4 @@
-import render from '#/lib/canvas';
+import render, { restorable } from '#/lib/canvas';
 import scene, { defaultCollections } from '#/scenes/withFocus';
 import Particles from '#/middleware/Particles';
 import Projectiles from '#/middleware/Projectiles';
@@ -56,11 +56,11 @@ export const main = (playerConfigs) => {
     game.step(time);
 
     render(
-      scene(
+      restorable(scene(
         game.getShips(),
         collections,
         screen,
-      ),
+      )),
       screen.canvas.context,
     );
 
