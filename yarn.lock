@@ -755,11 +755,6 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@types/matter-js@^0.10.7":
-  version "0.10.7"
-  resolved "https://registry.yarnpkg.com/@types/matter-js/-/matter-js-0.10.7.tgz#e998ab5028de5bbb0cbb33ee1857abb60be9f48f"
-  integrity sha512-ZDPtP7ZOAq/aHa4ingvD5vmWo1ShRSdOYDhFYAcoYpeUGkVkNuNyoJIbdS/lW3qJl4XvP9m/gVNi49Q602Azzw==
-
 "@types/q@^1.5.1":
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
