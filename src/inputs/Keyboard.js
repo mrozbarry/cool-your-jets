@@ -1,4 +1,30 @@
-export default class Keyboard {
+import BaseInput from './Base';
+
+export default class Keyboard extends BaseInput {
+  static keyDownHandler (event) {
+    Keyboard.keyboardState[event.code] = true;
+  }
+
+  static keyUpHandler(event) {
+    Keyboard.keyboardState[event.code] = false;
+  }
+
+  static addListeners() {
+    if (Keyboard.hasHandlers) return;
+
+    Keyboard.keyboardState = {};
+
+    window.addEventListener('keydown', Keyboard.keyDownHandler);
+    window.addEventListener('keyup', Keyboard.keyUpHandler);
+    Keyboard.hasHandlers = true;
+  }
+
+  static removeListeners() {
+    window.removeEventListener('keydown', Keyboard.keyDownHandler);
+    window.removeEventListener('keyup', Keyboard.keyUpHandler);
+    Keyboard.hasHandlers = false;
+  }
+
   static WASD() {
     return new Keyboard({
       KeyW: 'up',
@@ -18,29 +44,14 @@ export default class Keyboard {
   }
 
   constructor(keyMap) {
+    super();
     this.keyMap = keyMap;
-    this.notifier = () => {};
-
-    const makeHandler = result => ({ code, repeat }) => {
-      const mapping = this.keyMap[code];
-      if (repeat || !mapping) return;
-
-      this.notifier(mapping, result);
-    };
-
-    const keydown = makeHandler(1);
-    const keyup = makeHandler(0);
-
-    window.addEventListener('keydown', keydown);
-    window.addEventListener('keyup', keyup);
-
-    this.detach = () => {
-      window.removeEventListener('keydown', keydown);
-      window.removeEventListener('keyup', keyup);
-    };
+    Keyboard.addListeners();
   }
 
-  setNotifier(fn) {
-    this.notifier = fn;
+  pumpEvents() {
+    for(const code of Object.keys(this.keyMap)) {
+      this.notifier(this.keyMap[code], Boolean(Keyboard.keyboardState[code]));
+    }
   }
 }

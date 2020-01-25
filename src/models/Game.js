@@ -87,28 +87,32 @@ export default class Game {
   }
 
   runMiddlewareTickStart(delta) {
-    for(const m of this.middleware) {
+    let m;
+    for(m of this.middleware) {
       if (!m.instance.enabled) continue;
       m.instance.tickStart(this, delta);
     }
   }
 
   runMiddlewarePreStep() {
-    for(const m of this.middleware) {
+    let m;
+    for(m of this.middleware) {
       if (!m.instance.enabled) continue;
       m.instance.preStep(this, this.timestep);
     }
   }
 
   runMiddlewarePostStep() {
-    for(const m of this.middleware) {
+    let m;
+    for(m of this.middleware) {
       if (!m.instance.enabled) continue;
       m.instance.postStep(this, this.timestep);
     }
   }
 
   runMiddlewareTickEnd(delta) {
-    for(const m of this.middleware) {
+    let m;
+    for(m of this.middleware) {
       if (!m.instance.enabled) continue;
       m.instance.tickEnd(this, delta);
     }

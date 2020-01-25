@@ -1,3 +1,5 @@
+import BaseInput from './Base';
+
 // Axis 1: thrust
 // Axis 2: turn
 // B9: Shoot
@@ -18,9 +20,13 @@ const lock = (fn) => {
 
 const claimedIndexes = [];
 
-export default class Gamepad {
+export default class Gamepad extends BaseInput {
+  static waitForGamepad(fn) {
+    Gamepad.pendingInputs = (Gamepad.pendingInputs || []).concat(fn);
+  }
+
   constructor(initialGamepadIndex = null) {
-    this.notifier = () => {};
+    super();
 
     this.gamepadIndex = initialGamepadIndex;
     if (initialGamepadIndex !== null) {
@@ -33,7 +39,6 @@ export default class Gamepad {
     window.addEventListener('gamepadconnected', this.connectGamepad);
     window.addEventListener('gamepaddisconnected', this.disconnectGamepad);
 
-    this.setNotifier = this.setNotifier.bind(this);
 
     this.detach = () => {
       window.removeEventListener('gamepadconnected', this.connectGamepad);
@@ -41,11 +46,7 @@ export default class Gamepad {
     };
   }
 
-  setNotifier(fn) {
-    this.notifier = fn;
-  }
-
-  update() {
+  pumpEvents() {
     if (this.gamepadIndex === null) return;
 
     const gamepads = navigator.getGamepads();
