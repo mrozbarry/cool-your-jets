@@ -3810,6 +3810,13 @@ p2@^0.7.1:
   dependencies:
     poly-decomp "0.1.1"
 
+page@^1.11.5:
+  version "1.11.5"
+  resolved "https://registry.yarnpkg.com/page/-/page-1.11.5.tgz#0cfc8608be337f26f4377f31df0787aef0ca1af7"
+  integrity sha512-0JXUHc7Y8p1cPJQbhZSwaKO3p+bU3Rgny+OM5gJMKHWHvJKan/fsE5RUzEjRQolv9DzPOSVWfSOHz0lLxK19eA==
+  dependencies:
+    path-to-regexp "~1.2.1"
+
 pako@^0.2.5:
   version "0.2.9"
   resolved "https://registry.yarnpkg.com/pako/-/pako-0.2.9.tgz#f3f7522f4ef782348da8161bad9ecfd51bf83a75"
@@ -3961,6 +3968,13 @@ path-to-regexp@0.1.7:
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-0.1.7.tgz#df604178005f522f15eb4490e7247a1bfaa67f8c"
   integrity sha1-32BBeABfUi8V60SQ5yR6G/qmf4w=
+
+path-to-regexp@~1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-1.2.1.tgz#b33705c140234d873c8721c7b9fd8b541ed3aff9"
+  integrity sha1-szcFwUAjTYc8hyHHuf2LVB7Tr/k=
+  dependencies:
+    isarray "0.0.1"
 
 pbkdf2@^3.0.3:
   version "3.0.17"
