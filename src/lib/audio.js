@@ -1,5 +1,68 @@
 import * as audio from '../assets/sounds';
 
+class AudioClip {
+  static fromUrl(url, options) {
+    const audioClip = new AudioClip(options);
+    return audioClip.setUrl(url);
+  }
+
+  static cloneFrom(fromAudioClip) {
+    const audioClip = new AudioClip(fromAudioClip.options);
+    audioClip.source = fromAudioClip.source.cloneNode();
+    fromAudioClip.children.push(audioClip);
+    return audioClip;
+  }
+
+  constructor(options = {}) {
+    this.source = new Audio();
+    this.options = options;
+    this.children = [];
+  }
+
+  setUrl(url) {
+    return new Promise((resolve, reject) => {
+      const onError = (err) => reject(err);
+      const onLoad = () => resolve(this);
+
+      this.source.addEventListener('error', onError, { once: true });
+      this.source.addEventListener('loadeddata', onLoad, { once: true });
+
+      this.source.src = url;
+    });
+  }
+
+  stop() {
+    this.source.pause();
+    this.source.currentTime = 0;
+    let child;
+    for(child of this.children) {
+      child.stop();
+    }
+  }
+
+  removeChild(child) {
+    const index = this.children.findIndex(c => c === child);
+    if (index === -1) return;
+
+    this.children.splice(index, 1);
+  }
+
+  sfx() {
+    const child = AudioClip.cloneFrom(this);
+
+    child.source.addEventListener('ended', () => {
+      child.stop();
+      this.removeChild(child);
+    }, { once: true });
+
+    child.play();
+  }
+
+  loop() {
+    // TODO
+  }
+}
+
 class AudioController {
   constructor() { this.audio = {};
     this.playing = [];
@@ -47,12 +110,11 @@ class AudioController {
   playSfx(name) {
     const sfx = this.audio[name].cloneNode();
     sfx.addEventListener('ended', () => {
-      const idx = this.playing.find(s => s === sfx);
-      this.playing.splice(idx, 1);
-      sfx.pause();
+      console.log('audio.playSfx', name, sfx.src, 'ended');
+      this.stopAudio(name);
     });
     this.playing.push(sfx);
-    sfx.play();
+    // sfx.play();
     return sfx;
   }
 
