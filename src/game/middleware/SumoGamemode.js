@@ -1,6 +1,6 @@
 import Base from './Base';
 import p2 from 'p2';
-import * as collisions from '#/collisions';
+import * as collisions from '#/game/collisions';
 import { properties, circleStroke } from '#/lib/canvas';
 import AudioControl from '#/lib/audio';
 

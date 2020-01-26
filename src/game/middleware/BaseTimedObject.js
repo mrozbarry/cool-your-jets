@@ -1,4 +1,4 @@
-import Base from '#/middleware/Base';
+import Base from './Base';
 
 export default class BaseTimedObject extends Base {
   constructor() {

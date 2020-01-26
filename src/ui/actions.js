@@ -1,4 +1,5 @@
 import * as effects from '#/ui/effects';
+import page from 'page';
 
 const makePlayer = (controls, name, ready = false) => ({ controls, name, ready });
 const initialPlayers = [
@@ -49,7 +50,7 @@ export const PlayerName = (state, { index, name }) => ({
 
 export const PlayGame = state => [
   { ...state, playGame: true },
-  effects.PlayLoop('game'),
+  effects.PlayGame(state.players),
 ];
 
 export const GamepadConnected = state => ({ ...state, hasGamepads: true });

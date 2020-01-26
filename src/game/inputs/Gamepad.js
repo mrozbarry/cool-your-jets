@@ -4,20 +4,6 @@ import BaseInput from './Base';
 // Axis 2: turn
 // B9: Shoot
 
-let locked = false;
-
-const lock = (fn) => {
-  if (locked) {
-    return false;
-  }
-
-  locked = true;
-  fn();
-  locked = false;
-
-  return true;
-};
-
 const claimedIndexes = [];
 
 export default class Gamepad extends BaseInput {
@@ -40,7 +26,7 @@ export default class Gamepad extends BaseInput {
     window.addEventListener('gamepaddisconnected', this.disconnectGamepad);
 
 
-    this.detach = () => {
+    this.cleanup = () => {
       window.removeEventListener('gamepadconnected', this.connectGamepad);
       window.removeEventListener('gamepaddisconnected', this.disconnectGamepad);
     };

@@ -1,5 +1,5 @@
 import p2 from 'p2';
-import * as collisions from '#/collisions';
+import * as collisions from '#/game/collisions';
 
 const points = [
   [0, -20], // Head

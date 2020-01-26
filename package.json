@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "parcel serve --no-hmr index.html"
+    "start": "parcel serve index.html"
   },
   "dependencies": {
     "esm": "^3.2.25",

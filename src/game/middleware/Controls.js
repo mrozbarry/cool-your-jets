@@ -1,5 +1,4 @@
-import BaseMiddleware from '#/middleware/Base';
-import GamepadInput from '#/inputs/Gamepad';
+import BaseMiddleware from './Base';
 import AudioControl from '#/lib/audio';
 
 const defaultState = {
@@ -38,6 +37,8 @@ export default class Controls extends BaseMiddleware {
   snapshot() {
     return JSON.parse(JSON.stringify(this.state));
   }
+
+  init() {}
 
   tickStart(game) {
     for(const input of Object.values(this.inputs)) {
@@ -86,5 +87,13 @@ export default class Controls extends BaseMiddleware {
       ship.body.applyForceLocal([0, up * -game.thrustForce]);
       ship.body.angularVelocity = (right - left) * (game.turnVelocity * delta);
     }
+  }
+
+  deinit() {
+    for(const input of Object.values(this.inputs)) {
+      input.cleanup();
+    }
+    this.inputs = {};
+    this.state = {};
   }
 }

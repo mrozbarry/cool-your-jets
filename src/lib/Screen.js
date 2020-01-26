@@ -22,6 +22,7 @@ export class Canvas {
 export default class Screen {
   constructor(width, height) {
     this.container = document.querySelector('game-container');
+    console.log('Screen', this.container);
     this.width = width;
     this.height = height;
     this.aspectRatio = this.height / this.width;

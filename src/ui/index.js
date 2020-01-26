@@ -1,6 +1,6 @@
 import { app, h } from 'hyperapp';
-import * as subscriptions from './ui/subscriptions';
-import * as actions from './ui/actions';
+import * as subscriptions from '#/ui/subscriptions';
+import * as actions from '#/ui/actions';
 
 const overrideStyles = {
   fontFamily: `'screaming_neon', sans-serif`,
@@ -113,12 +113,12 @@ const grid = ({ count }, children) => h(
   children,
 );
 
-app({
+export default (node) => app({
   init: actions.Initialize,
 
   view: state => {
     if (state.playGame) {
-      return h('game-container');
+      return h('div');
     }
 
     const gamepads = state.hasGamepads
@@ -146,6 +146,8 @@ app({
   },
 
   subscriptions: state => {
+    if (state.playGame) return [];
+
     const availablePlayers = state.players.filter(p => p.controls).length;
     const canStartGame = availablePlayers > 1 && state.players.filter(p => p.ready).length === availablePlayers;
 
@@ -166,5 +168,5 @@ app({
     ];
   },
 
-  node: document.querySelector('#app'),
+  node,
 });

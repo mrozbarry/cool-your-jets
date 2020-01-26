@@ -1,6 +1,6 @@
 import p2 from 'p2';
-import Controls from '#/middleware/Controls';
-import Ship from '#/models/Ship';
+import Controls from '#/game/middleware/Controls';
+import Ship from '#/game/models/Ship';
 
 function *defaultSpawnGenerator() {
   while(true) {
@@ -21,12 +21,13 @@ export default class Game {
   }) {
     this.controls = new Controls();
 
-    this.middleware = [{ name: 'controls', instance: this.controls }];
     this.timestep = timestep || (1 / 30);
     this.thrustForce = Math.abs(thrustForce || 600);
     this.turnVelocity = Math.abs(turnVelocity || 100);
     this.fireLockDelay = Math.abs(fireLockDelay || 300);
     this.projectileAugmentForce = Math.abs(projectileAugmentForce || 100);
+
+    this.middleware = [];
 
     this.previousTime = null;
     this.currentTime = 0;
@@ -41,6 +42,8 @@ export default class Game {
 
     this.world.on('preStep', this.runMiddlewarePreStep.bind(this));
     this.world.on('postStep', this.runMiddlewarePostStep.bind(this));
+
+    this.addMiddleware('controls', this.controls);
   }
 
   addPlayer(name, input) {
@@ -81,7 +84,8 @@ export default class Game {
   }
 
   init() {
-    for(const m of this.middleware) {
+    let m;
+    for(m of this.middleware) {
       m.instance.init(this);
     }
   }
@@ -115,6 +119,13 @@ export default class Game {
     for(m of this.middleware) {
       if (!m.instance.enabled) continue;
       m.instance.tickEnd(this, delta);
+    }
+  }
+
+  deinit() {
+    let m;
+    for(m of this.middleware) {
+      m.instance.deinit(this);
     }
   }
 

@@ -4,6 +4,7 @@ export default class BaseInput {
   }
 
   setNotifier(fn) {
+    console.log('Setting notifier', fn);
     this.notifier = fn;
   }
 

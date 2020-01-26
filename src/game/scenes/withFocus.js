@@ -1,9 +1,9 @@
-import shipComponent from '#/components/ship';
-import particleComponent from '#/components/particle';
-import laserComponent from '#/components/laser';
-import infoComponent from '#/components/info';
-import viewportComponent from '#/components/viewport';
-import singlePlayerScene from '#/scenes/singlePlayer';
+import shipComponent from '#/game/components/ship';
+import particleComponent from '#/game/components/particle';
+import laserComponent from '#/game/components/laser';
+import infoComponent from '#/game/components/info';
+import viewportComponent from '#/game/components/viewport';
+import singlePlayerScene from '#/game/scenes/singlePlayer';
 
 export const defaultCollections = ({ ships, particles, projectiles }) => {
   const collections = [];
@@ -20,7 +20,7 @@ export const defaultCollections = ({ ships, particles, projectiles }) => {
       collection: ships,
       fn: (s) => [
         s.alive && infoComponent(s),
-        shipComponent(s)
+        shipComponent(s),
       ],
     });
   }
@@ -31,7 +31,7 @@ export const defaultCollections = ({ ships, particles, projectiles }) => {
 export default (ships, collections, screen) => {
   const size = [screen.width, screen.height];
   const portals = screen.divide(ships.length);
-  const { w, h } = portals[0]
+  const { w, h } = portals[0];
   const path = new Path2D();
   path.rect(0, 0, w, h);
 

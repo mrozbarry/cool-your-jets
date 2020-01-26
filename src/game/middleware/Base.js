@@ -10,6 +10,7 @@ export default class BaseMiddleware {
   preStep() {}
   postStep() {}
   tickEnd() {}
+  deinit() {}
 
   renderCollection(collection) {
     return collection;

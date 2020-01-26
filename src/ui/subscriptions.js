@@ -1,3 +1,4 @@
+import page from 'page';
 import { main } from '#/index';
 import AudioControl from '#/lib/audio';
 
@@ -37,20 +38,12 @@ const GamepadFX = (dispatch, { onConnect }) => {
 export const Gamepad = props => [GamepadFX, props];
 
 const RunGameFX = (_, { players }) => {
-  let cancel = () => {};
+  const config = btoa(JSON.stringify(players));
 
-  const testDom = () => {
-    if (document.querySelector('game-container')) {
-      return AudioControl.waitForLoad()
-        .then(() => {
-          cancel = main(players);
-        });
-    }
-    setTimeout(testDom, 100);
+  page(`/play/${config}`);
+
+  return () => {
+    page('/');
   };
-
-  testDom();
-
-  return () => cancel();
 };
 export const RunGame = props => [RunGameFX, props];

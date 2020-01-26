@@ -2,6 +2,7 @@ import BaseInput from './Base';
 
 export default class Keyboard extends BaseInput {
   static keyDownHandler (event) {
+    if (event.repeat) return;
     Keyboard.keyboardState[event.code] = true;
   }
 
@@ -53,5 +54,9 @@ export default class Keyboard extends BaseInput {
     for(const code of Object.keys(this.keyMap)) {
       this.notifier(this.keyMap[code], Boolean(Keyboard.keyboardState[code]));
     }
+  }
+
+  cleanup() {
+    Keyboard.removeListeners();
   }
 }

@@ -1,6 +1,6 @@
-import BaseTimedObjectMiddleware from '#/middleware/BaseTimedObject';
+import BaseTimedObjectMiddleware from './BaseTimedObject';
 import p2 from 'p2';
-import * as collisions from '#/collisions';
+import * as collisions from '#/game/collisions';
 
 export default class Projectiles extends BaseTimedObjectMiddleware {
   add(parentBody) {
