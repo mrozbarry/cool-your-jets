@@ -12,7 +12,7 @@ import Screen from '#/lib/Screen';
 export const main = (playerConfigs) => {
   let running = true;
 
-  const screen = new Screen(1024, 768);
+  const screen = new Screen(1920, 1080);
 
   const game = new Game(1 / 60);
   const particles = game.addMiddleware('particles', new Particles(game.world));
