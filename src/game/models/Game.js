@@ -1,6 +1,7 @@
 import p2 from 'p2';
 import Controls from '#/game/middleware/Controls';
 import Ship from '#/game/models/Ship';
+import Player from '#/game/models/Player';
 
 function *defaultSpawnGenerator() {
   while(true) {
@@ -27,12 +28,14 @@ export default class Game {
     this.fireLockDelay = Math.abs(fireLockDelay || 300);
     this.projectileAugmentForce = Math.abs(projectileAugmentForce || 100);
 
+    this.done = false;
+
     this.middleware = [];
 
     this.previousTime = null;
     this.currentTime = 0;
 
-    this.ships = {};
+    this.players = [];
 
     this.world = new p2.World({
       gravity: [0, 0],
@@ -46,30 +49,45 @@ export default class Game {
     this.addMiddleware('controls', this.controls);
   }
 
-  addPlayer(name, input) {
+  onEndWithWinner(id) {}
+  onEndWithoutWinner() {}
+
+  endWithWinner(id) {
+    this.done = true;
+    this.onEndWithWinner(id);
+  }
+
+  endWithoutWinner() {
+    this.done = true;
+    this.onEndWithoutWinner();
+  }
+
+  addPlayer(config) {
     const id = Math.random().toString(36).slice(2);
 
-    const ship = new Ship(name, this.spawnGenerator.next().value);
+    const ship = new Ship(config.name, this.spawnGenerator.next().value);
 
-    this.ships[id] = ship;
-    this.controls.add(id, input);
+    const player = new Player(id, config, ship);
+
+    this.controls.add(id, player.input);
     this.world.addBody(ship.body);
 
-    return { id, ship, input };
+    this.players.push(player);
+
+    return player;
   }
 
   killPlayer(body) {
-    const ship = this.getShipFromBody(body);
-    if (!ship) return;
-    ship.alive = false;
-    this.world.removeBody(ship.body);
+    const player = this.getPlayerFromBody(body);
+    if (!player) return;
+    player.alive = false;
+    this.world.removeBody(player.ship.body);
   }
 
-  getShips() { return Object.values(this.ships); }
-  getPlayerIds() { return Object.keys(this.ships); }
-  getShipFromBody(body) {
-    return this.getShips()
-      .find(ship => ship.body === body);
+  getShips() { return this.players.map(p => p.ship); }
+  getPlayerIds() { return this.players.map(p => p.id); }
+  getPlayerFromBody(body) {
+    return this.players.find(p => p.ship.body === body);
   }
 
   addMiddleware(name, instance) {
@@ -127,6 +145,7 @@ export default class Game {
     for(m of this.middleware) {
       m.instance.deinit(this);
     }
+    this.world.clear();
   }
 
   step(time) {

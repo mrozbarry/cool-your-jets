@@ -1,41 +1,47 @@
 import render, { restorable } from '#/lib/canvas';
-import scene, { defaultCollections } from '#/game/scenes/withFocus';
+import scene from '#/game/scenes/withFocus';
 import Particles from '#/game/middleware/Particles';
 import Projectiles from '#/game/middleware/Projectiles';
 import SumoGamemode from '#/game/middleware/SumoGamemode';
-//import FreeGamemode from '#/game/middleware/FreeGamemode';
-import KeyboardInput from '#/game/inputs/Keyboard';
-import GamepadInput from '#/game/inputs/Gamepad';
 import Game from '#/game/models/Game';
 import Screen from '#/lib/Screen';
+import pipe from '#/lib/pipe';
+import page from 'page';
 
-export default (playerConfigs) => {
-  let running = true;
-
-  const screen = new Screen(1920, 1080);
+export default (playerConfigs, container) => {
+  console.warn('game/index', { playerConfigs, container });
+  const screen = new Screen(1920, 1080, container);
 
   const game = new Game(1 / 30);
-  const particles = game.addMiddleware('particles', new Particles(game.world));
-  const projectiles = game.addMiddleware('projectiles', new Projectiles(game.world));
-  const gameMode = game.addMiddleware('gamemode', new SumoGamemode(500, 60));
-  //const gameMode = game.addMiddleware('gamemode', new FreeGamemode());
 
-  const keyboardInputMap = {
-    wasd: KeyboardInput.WASD(),
-    arrows: KeyboardInput.Arrows(),
+  const playersToConfig = () => pipe([
+    players => players.map(p => ({
+      id: p.id,
+      name: p.name,
+      wins: p.wins,
+      color: p.color,
+      controls: p.controls,
+    })),
+    JSON.stringify,
+    btoa,
+  ], game.players);
+
+  game.onEndWithWinner = (id) => {
+    const config = playersToConfig();
+    page.show(`/play/${config}/winner/${id}`);
   };
 
-  const players = playerConfigs.map((config) => {
-    const [inputType, subType] = config.controls.split('|');
-    switch (inputType) {
-    case 'keyboard': return [config.name, keyboardInputMap[subType]];
-    case 'gamepad': return [config.name, new GamepadInput(Number(subType))];
-    }
-    return null;
-  }).filter(p => p);
+  game.onEndWithoutWinner = () => {
+    const config = playersToConfig();
+    page.show(`/play/${config}/no-winner`);
+  };
 
-  for(const details of players) {
-    game.addPlayer(...details);
+  game.addMiddleware('particles', new Particles(game.world));
+  game.addMiddleware('projectiles', new Projectiles(game.world));
+  game.addMiddleware('gamemode', new SumoGamemode(500, 60));
+
+  for(const details of playerConfigs) {
+    game.addPlayer(details);
   }
 
   game.init();
@@ -43,24 +49,11 @@ export default (playerConfigs) => {
   let rafHandle = null;
 
   const tick = (time) => {
-    if (!running) return;
-
-    const ships = game.getShips();
-
-    const collections = gameMode.renderCollection(
-      defaultCollections({
-        particles: particles.items,
-        projectiles: projectiles.items,
-        ships,
-      }),
-    );
-
     game.step(time);
 
     render(
       restorable(scene(
-        game.getShips(),
-        collections,
+        game,
         screen,
       )),
       screen.canvas.context,
@@ -70,37 +63,19 @@ export default (playerConfigs) => {
   };
 
   const schedule = () => {
-    running = true;
     rafHandle = requestAnimationFrame(tick);
   };
 
   const unschedule = () => {
     cancelAnimationFrame(rafHandle);
-    running = false;
     rafHandle = null;
   };
-
-  const onFocusChange = () => {
-    return document.hasFocus()
-      ? schedule()
-      : unschedule();
-  };
-
-  const onFocus = () => {
-    onFocusChange();
-    game.resetPreviousTime();
-  };
-
-  window.addEventListener('blur', onFocusChange);
-  window.addEventListener('focus', onFocus);
 
   schedule();
 
   return () => {
     unschedule();
-    window.removeEventListener('blur');
-    window.removeEventListener('focus');
-    game.world.clear();
     game.deinit();
+    screen.detach();
   };
 };

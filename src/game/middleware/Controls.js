@@ -49,16 +49,16 @@ export default class Controls extends BaseMiddleware {
     const projectiles = game.getMiddleware('projectiles');
     const keyState = game.controls.snapshot();
 
-    for(const playerId of game.getPlayerIds()) {
-      if (!keyState[playerId]) continue;
+    let player;
+    for(player of game.players) {
+      if (!keyState[player.id]) continue;
 
-      const ship = game.ships[playerId];
-      if (!ship || !ship.alive) continue;
+      if (!player.alive) continue;
 
-      const { up, down } = keyState[playerId];
+      const { up, down } = keyState[player.id];
 
       if (up) {
-        for(let thruster of ship.getThrusters()) {
+        for(let thruster of player.ship.getThrusters()) {
           particles.add(
             thruster.map(v => v + ((Math.random() * 2) - 1)),
             'simple',
@@ -66,9 +66,9 @@ export default class Controls extends BaseMiddleware {
           );
         }
       }
-      if (down && game.currentTime > ship.fireLock) {
-        projectiles.add(game, ship.body);
-        ship.fireLock = game.currentTime + game.fireLockDelay;
+      if (down && game.currentTime > player.ship.fireLock) {
+        projectiles.add(game, player.ship.body);
+        player.ship.fireLock = game.currentTime + game.fireLockDelay;
         AudioControl.playSfx('laser');
       }
     }
@@ -77,15 +77,15 @@ export default class Controls extends BaseMiddleware {
   postStep(game, delta) {
     const keyState = game.controls.snapshot();
 
-    for(const playerId of game.getPlayerIds()) {
-      if (!keyState[playerId]) continue;
+    let player;
+    for(player of game.players) {
+      if (!keyState[player.id]) continue;
 
-      const ship = game.ships[playerId];
-      if (!ship || !ship.alive) continue;
-      const { up, right, left } = keyState[playerId];
+      if (!player.alive) continue;
+      const { up, right, left } = keyState[player.id];
 
-      ship.body.applyForceLocal([0, up * -game.thrustForce]);
-      ship.body.angularVelocity = (right - left) * (game.turnVelocity * delta);
+      player.ship.body.applyForceLocal([0, up * -game.thrustForce]);
+      player.ship.body.angularVelocity = (right - left) * (game.turnVelocity * delta);
     }
   }
 

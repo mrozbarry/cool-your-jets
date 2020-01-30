@@ -1,6 +1,7 @@
 import BaseTimedObjectMiddleware from './BaseTimedObject';
 import p2 from 'p2';
 import * as collisions from '#/game/collisions';
+import particleComponent from '#/game/components/particle';
 
 export default class Particles extends BaseTimedObjectMiddleware {
   add([x, y], type, totalLife) {
@@ -25,5 +26,9 @@ export default class Particles extends BaseTimedObjectMiddleware {
     this.world.addBody(particle.body);
 
     return super.add(particle);
+  }
+
+  render() {
+    return this.items.map(particleComponent);
   }
 }

@@ -2,7 +2,6 @@ import Base from './Base';
 import p2 from 'p2';
 import * as collisions from '#/game/collisions';
 import { properties, circleStroke } from '#/lib/canvas';
-import AudioControl from '#/lib/audio';
 
 export default class SumoGamemode extends Base {
   constructor(radius, seconds) {
@@ -12,7 +11,6 @@ export default class SumoGamemode extends Base {
     this.radius = radius;
     this.lastOneAt = null;
     this.winner = null;
-    this.done = false;
 
     this.ring = this.makeRing();
   }
@@ -23,7 +21,7 @@ export default class SumoGamemode extends Base {
     game.world.addBody(this.ring.body);
 
     game.world.on('endContact', (event) => {
-      if (this.done) {
+      if (game.done) {
         return;
       }
       const shapes = [event.shapeA, event.shapeB];
@@ -53,49 +51,36 @@ export default class SumoGamemode extends Base {
     return { body, shape };
   }
 
-  renderCollection(collection) {
+  render() {
     return [
-      {
-        collection: [this.ring],
-        fn: (ring) => [
-          properties({
-            lineWidth: 5,
-            strokeStyle: 'red',
-          }, [
-            circleStroke(
-              ring.body.interpolatedPosition,
-              ring.shape.radius,
-            ),
-          ]),
-        ],
-      },
-      ...collection,
+      properties({
+        lineWidth: 5,
+        strokeStyle: 'red',
+      }, [
+        circleStroke(
+          this.ring.body.interpolatedPosition,
+          this.ring.shape.radius,
+        ),
+      ]),
     ];
   }
 
-  renderOverlay() {
-  }
-
-  tickStart(_game, delta) {
-    if (this.done) return;
+  tickStart(game, delta) {
+    if (game.done) return;
     this.time[0] += (delta * 1000);
     this.ring.shape.radius = this.radius * (1.0 - Math.min(1, this.time[0] / this.time[1]));
   }
 
   tickEnd(game) {
-    const shipsAlive = game.getShips().filter(s => s.alive);
-    if (this.lastOneAt === null && shipsAlive.length === 1) {
+    const playersAlive = game.players.filter(p => p.alive);
+    if (this.lastOneAt === null && playersAlive.length === 1) {
       this.lastOneAt = game.currentTime + 1000;
-    } else if (shipsAlive.length === 1 && game.currentTime >= this.lastOneAt) {
-      if (!this.done) {
-        this.winner = shipsAlive[0];
-        this.done = true;
-        game.getMiddleware('controls').enabled = false;
-        AudioControl.stop();
-        AudioControl.playLoop('game-winner');
+    } else if (playersAlive.length === 1 && game.currentTime >= this.lastOneAt) {
+      if (!game.done) {
+        game.endWithWinner(playersAlive[0].id);
       }
-    } else if (shipsAlive.length === 0) {
-      this.done = true;
+    } else if (playersAlive.length === 0) {
+      game.endWithoutWinner();
     }
   }
 }

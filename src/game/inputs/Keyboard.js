@@ -1,29 +1,36 @@
 import BaseInput from './Base';
 
+let hasHandlers = false;
+let keyboardState = {};
+
 export default class Keyboard extends BaseInput {
   static keyDownHandler (event) {
     if (event.repeat) return;
-    Keyboard.keyboardState[event.code] = true;
+    keyboardState[event.code] = true;
   }
 
   static keyUpHandler(event) {
-    Keyboard.keyboardState[event.code] = false;
+    keyboardState[event.code] = false;
   }
 
   static addListeners() {
-    if (Keyboard.hasHandlers) return;
+    console.log('KeyboardInput.addListeners', hasHandlers);
+    if (hasHandlers) return;
 
-    Keyboard.keyboardState = {};
+    keyboardState = {};
 
     window.addEventListener('keydown', Keyboard.keyDownHandler);
     window.addEventListener('keyup', Keyboard.keyUpHandler);
-    Keyboard.hasHandlers = true;
+    hasHandlers = true;
+    console.log('addListeners');
   }
 
   static removeListeners() {
     window.removeEventListener('keydown', Keyboard.keyDownHandler);
     window.removeEventListener('keyup', Keyboard.keyUpHandler);
-    Keyboard.hasHandlers = false;
+    hasHandlers = false;
+    keyboardState = {};
+    console.log('removeListeners');
   }
 
   static WASD() {
@@ -46,13 +53,14 @@ export default class Keyboard extends BaseInput {
 
   constructor(keyMap) {
     super();
+    console.warn('Initializing new KeyboardInput');
     this.keyMap = keyMap;
     Keyboard.addListeners();
   }
 
   pumpEvents() {
     for(const code of Object.keys(this.keyMap)) {
-      this.notifier(this.keyMap[code], Boolean(Keyboard.keyboardState[code]));
+      this.notifier(this.keyMap[code], Boolean(keyboardState[code]));
     }
   }
 

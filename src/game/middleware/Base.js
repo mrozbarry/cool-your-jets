@@ -12,8 +12,8 @@ export default class BaseMiddleware {
   tickEnd() {}
   deinit() {}
 
-  renderCollection(collection) {
-    return collection;
+  render() {
+    return [];
   }
 
   renderOverlay() {

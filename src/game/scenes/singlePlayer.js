@@ -1,12 +1,19 @@
 import { rectFill, rectStroke, properties, translate, restorable } from '#/lib/canvas';
 
-export default (ship, collections, screen) => {
+import infoComponent from '#/game/components/info';
+import shipComponent from '#/game/components/ship';
+
+export default (focus, game, screen) => {
   const size = [screen.width, screen.height];
 
   const centerOnShip = [
-    (size[0] / 2) - ship.body.interpolatedPosition[0],
-    (size[1] / 2) - ship.body.interpolatedPosition[1],
+    (size[0] / 2) - focus[0],
+    (size[1] / 2) - focus[1],
   ];
+
+  const particles = game.getMiddleware('particles');
+  const projectiles = game.getMiddleware('projectiles');
+  const gamemode = game.getMiddleware('gamemode');
 
   return [
     properties({
@@ -17,10 +24,15 @@ export default (ship, collections, screen) => {
       rectStroke([0, 0], size),
     ]),
 
-    restorable(translate(centerOnShip, (
-      collections.map(({ collection, fn }) => collection.map(fn))
-    ))),
+    restorable(translate(centerOnShip, [
+      particles.render(game),
+      projectiles.render(game),
+      gamemode.render(game),
+      game.players.map(player => [
+        player.alive && infoComponent(player.ship),
+        shipComponent(player),
+      ]),
+    ])),
   ];
 };
-
 

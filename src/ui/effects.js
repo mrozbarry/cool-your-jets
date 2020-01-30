@@ -16,8 +16,7 @@ const PlayLoopFX = (_, name) => {
 };
 export const PlayLoop = props => [PlayLoopFX, props];
 
-const PlayGameFX = (_, players) => {
-  const config = btoa(JSON.stringify(players.filter(p => p.controls)));
-  page(`/play/${config}`);
+const PageNavigateFX = (_, path) => {
+  page.show(path);
 };
-export const PlayGame = players => [PlayGameFX, players];
+export const PageNavigate = props => [PageNavigateFX, props];

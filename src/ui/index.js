@@ -12,9 +12,11 @@ const overrideStyles = {
 
 const formElementStyles = {
   ...overrideStyles,
+  display: 'block',
   border: 'none',
   outline: 'none',
   borderBottom: '3px white solid',
+  width: '100%',
 };
 
 const playerContainer = (props, children) => h(
@@ -38,6 +40,8 @@ const fieldset = (props, children) => h(
   {
     ...(props || {}),
     style: {
+      ...(props && props.style || {}),
+      width: '100%',
       border: 'none',
       outline: 'none',
       marginBottom: '32px',
@@ -46,13 +50,18 @@ const fieldset = (props, children) => h(
   children,
 );
 
-const label = ({ text }, children) => h(
+const label = ({ text, style }, children) => h(
   'label',
   {
-    display: 'block',
+    style: {
+      display: 'block',
+      ...(style || {}),
+    },
   },
-  h('div', null, text),
-  children,
+  [
+    text,
+    children,
+  ],
 );
 
 const playerSetup = ({
@@ -60,6 +69,7 @@ const playerSetup = ({
   controls,
   name,
   ready,
+  color: [_h, s, l],
   controlOptions,
   gameCountdown,
 }) => h(playerContainer, null, [
@@ -76,8 +86,28 @@ const playerSetup = ({
       ))),
     ]),
   ]),
-  fieldset(null, [
-    h(label, { text: 'Name' }, [
+  fieldset({
+    style: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      width: '100%',
+    },
+  }, [
+    h('div', {
+      style: {
+        border: '3px white solid',
+        backgroundColor: `hsl(${_h}, ${s}%, ${l}%)`,
+        width: '48px',
+        height: '48px',
+        cursor: 'pointer',
+        flex: '0 0',
+
+      },
+      onclick: [actions.PlayerColor, { index }],
+    }),
+    h(label, { text: 'Name', style: { width: 'calc(100% - 54px)' } }, [
       h('input', {
         value: name,
         style: formElementStyles,
@@ -160,10 +190,6 @@ export default (node) => app({
         count: 5,
         onTick: actions.GameCountdown,
         onStart: actions.PlayGame,
-      }),
-
-      state.playGame && subscriptions.RunGame({
-        players: state.players,
       }),
     ];
   },

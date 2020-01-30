@@ -9,10 +9,6 @@ export class Canvas {
     this.resize = debounce((width, height) => {
       this.element.width = width; // * window.devicePixelRatio;
       this.element.height = height; // * window.devicePixelRatio;
-      console.log('divided screen', {
-        screens: this.screen.divide(4),
-        size: [this.element.width, this.element.height],
-      });
     });
   }
 
@@ -20,9 +16,10 @@ export class Canvas {
 }
 
 export default class Screen {
-  constructor(width, height) {
-    this.container = document.querySelector('game-container');
-    console.log('Screen', this.container);
+  constructor(width, height, container) {
+    this.resize = this.resize.bind(this);
+
+    this.container = container;
     this.width = width;
     this.height = height;
     this.aspectRatio = this.height / this.width;
@@ -32,10 +29,12 @@ export default class Screen {
     this.canvas = new Canvas(this, element);
     this.resize();
 
+    window.addEventListener('resize', this.resize);
+  }
 
-    window.addEventListener('resize', () => {
-      this.resize();
-    });
+  detach() {
+    this.container.removeChild(this.canvas.element);
+    window.removeEventListener('resize', this.resize);
   }
 
   divide(count) {

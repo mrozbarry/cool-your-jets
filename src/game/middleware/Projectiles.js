@@ -2,6 +2,7 @@ import BaseTimedObjectMiddleware from './BaseTimedObject';
 import p2 from 'p2';
 import * as collisions from '#/game/collisions';
 import AudioControl from '#/lib/audio';
+import laserComponent from '#/game/components/laser';
 
 export default class Projectiles extends BaseTimedObjectMiddleware {
   init(game) {
@@ -53,5 +54,9 @@ export default class Projectiles extends BaseTimedObjectMiddleware {
         -game.thrustForce - game.projectileAugmentForce,
       ]);
     }
+  }
+
+  render() {
+    return this.items.map(laserComponent);
   }
 }

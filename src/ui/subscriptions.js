@@ -1,5 +1,4 @@
 import page from 'page';
-import { main } from '#/index';
 import AudioControl from '#/lib/audio';
 
 const StartGameFX = (dispatch, { count, onStart, onTick }) => {
@@ -36,14 +35,3 @@ const GamepadFX = (dispatch, { onConnect }) => {
   };
 };
 export const Gamepad = props => [GamepadFX, props];
-
-const RunGameFX = (_, { players }) => {
-  const config = btoa(JSON.stringify(players));
-
-  page(`/play/${config}`);
-
-  return () => {
-    page('/');
-  };
-};
-export const RunGame = props => [RunGameFX, props];
