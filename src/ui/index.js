@@ -5,7 +5,7 @@ import * as actions from '#/ui/actions';
 const overrideStyles = {
   fontFamily: `'screaming_neon', sans-serif`,
   fontSize: '36px',
-  backgroundColor: 'black',
+  backgroundColor: 'transparent',
   color: 'white',
   borderRadius: 0,
 };
@@ -24,12 +24,14 @@ const playerContainer = (props, children) => h(
   {
     ...(props || {}),
     style: {
+      fontSize: '36px',
+      padding: '24px',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: `'screaming_neon', sans-serif`,
-      fontSize: '32px',
+      justifyContent: 'space-around',
+      width: '100%',
+      height: '100%',
     },
   },
   children,
@@ -44,7 +46,6 @@ const fieldset = (props, children) => h(
       width: '100%',
       border: 'none',
       outline: 'none',
-      marginBottom: '32px',
     },
   },
   children,
@@ -64,6 +65,22 @@ const label = ({ text, style }, children) => h(
   ],
 );
 
+const row = (props, children) => h(
+  'div',
+  {
+    ...(props || {}),
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: '32px',
+      width: '80%',
+      ...(props && props.style || {}),
+    },
+  },
+  children,
+);
+
 const playerSetup = ({
   index,
   controls,
@@ -73,28 +90,22 @@ const playerSetup = ({
   controlOptions,
   gameCountdown,
 }) => h(playerContainer, null, [
-  fieldset(null, [
-    h(label, { text: 'Controls' }, [
-      h('select', {
-        style: {
-          ...formElementStyles,
-          width: '40vw',
-        },
-        onchange: [actions.PlayerControls, (event) => ({ index, controls: event.target.value })],
-      }, controlOptions.map(([value, label]) => (
-        h('option', { value, selected: value === controls }, label)
-      ))),
+  row(null, [
+    fieldset(null, [
+      h(label, { text: 'Controls' }, [
+        h('select', {
+          style: {
+            ...formElementStyles,
+            width: '100%',
+          },
+          onchange: [actions.PlayerControls, (event) => ({ index, controls: event.target.value })],
+        }, controlOptions.map(([value, label]) => (
+          h('option', { value, selected: value === controls }, label)
+        ))),
+      ]),
     ]),
   ]),
-  fieldset({
-    style: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      width: '100%',
-    },
-  }, [
+  row(null, [
     h('div', {
       style: {
         border: '3px white solid',
@@ -102,24 +113,28 @@ const playerSetup = ({
         width: '48px',
         height: '48px',
         cursor: 'pointer',
-        flex: '0 0',
+        flex: '0 0 48px',
+        marginRight: '8px',
 
       },
       onclick: [actions.PlayerColor, { index }],
     }),
-    h(label, { text: 'Name', style: { width: 'calc(100% - 54px)' } }, [
-      h('input', {
-        value: name,
-        style: formElementStyles,
-        oninput: [actions.PlayerName, (event) => ({ index, name: event.target.value })],
-      }),
+    fieldset({ style: { flex: 1 } }, [
+      h(label, { text: 'Name' }, [
+        h('input', {
+          value: name,
+          style: formElementStyles,
+          oninput: [actions.PlayerName, (event) => ({ index, name: event.target.value })],
+        }),
+      ]),
     ]),
   ]),
-  fieldset(null, [
+  row(null, [
     h('button', {
       type: 'button',
       style: {
         ...overrideStyles,
+
         borderWidth: '3px',
         padding: '1rem',
       },
@@ -136,6 +151,7 @@ const grid = ({ count }, children) => h(
       display: 'grid',
       gridTemplateColumns: '1fr 1fr',
       gridTemplateRows: count > 2 ? '1fr 1fr' : '1fr',
+      gridGap: '3rem',
       width: '100vw',
       height: '100vh',
     },

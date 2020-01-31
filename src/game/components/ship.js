@@ -17,7 +17,7 @@ const shipOutline = (lineOps, lineWidth, strokeColor) => {
 const shipFilled = (lineOps, hsl, alive) => {
   return properties(
     {
-      fillStyle: `hsla(${hsl[0]}, ${hsl[1]}%, ${hsl[2]}%, ${alive ? 0.5 : 0.1})`,
+      fillStyle: `hsla(${hsl[0]}, ${hsl[1]}%, ${hsl[2]}%, ${alive ? 0.2 : 0.1})`,
     },
     [
       path({ close: true, after: fill }, lineOps),
