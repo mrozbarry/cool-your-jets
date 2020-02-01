@@ -36,12 +36,14 @@ export default (config, winner, node) => app({
         width: '60%',
         fontSize: '2rem',
         margin: '5rem 0',
+        tableLayout: 'fixed',
+        borderCollapse: 'collapse',
       },
     }, [
       h('thead', null, [
         h('tr', null, [
-          h('th', { style: { textAlign: 'left' } }, 'Name'),
-          h('th', { style: { textAlign: 'right' } }, 'Wins'),
+          h('th', { style: { textAlign: 'left', padding: '0.5rem' } }, 'Name'),
+          h('th', { style: { textAlign: 'right', padding: '0.5rem' } }, 'Wins'),
         ]),
       ]),
       h('tbody', null, [
@@ -49,6 +51,8 @@ export default (config, winner, node) => app({
           h('td', {
             style: {
               textAlign: 'left',
+              backgroundColor: id === state.winner ? '#222' : 'transparent',
+              padding: '0.5rem',
             },
           }, [
             h('div', {
@@ -66,6 +70,8 @@ export default (config, winner, node) => app({
           h('td', {
             style: {
               textAlign: 'right',
+              backgroundColor: id === state.winner ? '#222' : 'transparent',
+              padding: '0.5rem',
             },
           }, wins),
         ])),

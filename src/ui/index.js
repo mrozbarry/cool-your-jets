@@ -89,60 +89,69 @@ const playerSetup = ({
   color: [_h, s, l],
   controlOptions,
   gameCountdown,
-}) => h(playerContainer, null, [
-  row(null, [
-    fieldset(null, [
-      h(label, { text: 'Controls' }, [
-        h('select', {
-          style: {
-            ...formElementStyles,
-            width: '100%',
-          },
-          onchange: [actions.PlayerControls, (event) => ({ index, controls: event.target.value })],
-        }, controlOptions.map(([value, label]) => (
-          h('option', { value, selected: value === controls }, label)
-        ))),
+}) => {
+  const [type, id] = controls.split('|');
+  const extraGamepadOption = type === 'gamepad' && id !== '-1'
+    ? [[controls, `Gamepad ${id}`]]
+    : [];
+
+  const options = controlOptions.concat(extraGamepadOption);
+
+  return h(playerContainer, null, [
+    row(null, [
+      fieldset(null, [
+        h(label, { text: 'Controls' }, [
+          h('select', {
+            style: {
+              ...formElementStyles,
+              width: '100%',
+            },
+            onchange: [actions.PlayerControls, (event) => ({ index, controls: event.target.value })],
+          }, options.map(([value, label]) => (
+            h('option', { value, selected: value === controls }, label)
+          ))),
+        ]),
       ]),
     ]),
-  ]),
-  row(null, [
-    h('div', {
-      style: {
-        border: '3px white solid',
-        backgroundColor: `hsl(${_h}, ${s}%, ${l}%)`,
-        width: '48px',
-        height: '48px',
-        cursor: 'pointer',
-        flex: '0 0 48px',
-        marginRight: '8px',
+    row(null, [
+      h('div', {
+        style: {
+          border: '3px white solid',
+          backgroundColor: `hsl(${_h}, ${s}%, ${l}%)`,
+          width: '48px',
+          height: '48px',
+          cursor: 'pointer',
+          flex: '0 0 48px',
+          marginRight: '8px',
 
-      },
-      onclick: [actions.PlayerColor, { index }],
-    }),
-    fieldset({ style: { flex: 1 } }, [
-      h(label, { text: 'Name' }, [
-        h('input', {
-          value: name,
-          style: formElementStyles,
-          oninput: [actions.PlayerName, (event) => ({ index, name: event.target.value })],
-        }),
+        },
+        onclick: [actions.PlayerColor, { index }],
+      }),
+      fieldset({ style: { flex: 1 } }, [
+        h(label, { text: 'Name' }, [
+          h('input', {
+            value: name,
+            style: formElementStyles,
+            oninput: [actions.PlayerName, (event) => ({ index, name: event.target.value })],
+          }),
+        ]),
       ]),
     ]),
-  ]),
-  row(null, [
-    h('button', {
-      type: 'button',
-      style: {
-        ...overrideStyles,
+    row(null, [
+      h('button', {
+        type: 'button',
+        style: {
+          ...overrideStyles,
 
-        borderWidth: '3px',
-        padding: '1rem',
-      },
-      disabled: (controls === '' || gameCountdown !== null),
-      onclick: [actions.PlayerReady, { index, ready: !ready }],
-    }, (gameCountdown === null ? (ready ? 'CANCEL' : 'READY') : `Starts in ${gameCountdown}`)),
-  ]),
-]);
+          borderWidth: '3px',
+          padding: '1rem',
+        },
+        disabled: (controls === '' || gameCountdown !== null),
+        onclick: [actions.PlayerReady, { index, ready: !ready }],
+      }, (gameCountdown === null ? (ready ? 'CANCEL' : 'READY') : `Starts in ${gameCountdown}`)),
+    ]),
+  ]);
+};
 
 const grid = ({ count }, children) => h(
   'div',
@@ -167,28 +176,57 @@ export default (node) => app({
       return h('div');
     }
 
-    const gamepads = state.hasGamepads
-      ? Array.from(navigator.getGamepads()).filter(gp => gp && gp.connected)
-      : [];
-
     const controlOptions = [
       ['', 'Not Playing'],
       ['keyboard|wasd', 'Keyboard - WASD'],
       ['keyboard|arrows', 'Keyboard - Arrows'],
-      ...gamepads.map((gp) => (
-        [`gamepad|${gp.index}`, `Gamepad ${gp.index + 1} - ${gp.id}`]
-      )),
+      ['gamepad|-1', 'Gamepad'],
     ];
-    return h(
-      grid,
-      { count: state.players.length },
-      state.players.map((p, index) => playerSetup({
-        ...p,
-        index,
-        controlOptions,
-        gameCountdown: state.gameCountdown,
-      })),
-    );
+
+    return h('div', {
+      style: { position: 'relative' },
+    }, [
+      h(
+        grid,
+        { count: state.players.length },
+        state.players.map((p, index) => playerSetup({
+          ...p,
+          index,
+          controlOptions,
+          gameCountdown: state.gameCountdown,
+        })),
+      ),
+      state.waitingOnGamepadForPlayer !== null && h('div', {
+        style: {
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          marginTop: '-20vh',
+          marginLeft: '-20vw',
+          width: '40vw',
+          height: '40vh',
+          border: '3px white solid',
+          backgroundColor: 'black',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          padding: '10vh 0',
+        },
+      }, [
+        h('h1', null, 'Press Any Button To Pick Gamepad'),
+        h('div', { style: { flex: 1 } }),
+        h('button', {
+          type: 'button',
+          onclick: [actions.PlayerControls, { index: state.waitingOnGamepadForPlayer, controls: '' }],
+          style: {
+            ...overrideStyles,
+            borderWidth: '3px',
+            padding: '1rem',
+          },
+        }, 'Cancel'),
+      ]),
+    ]);
   },
 
   subscriptions: state => {
@@ -206,6 +244,12 @@ export default (node) => app({
         count: 5,
         onTick: actions.GameCountdown,
         onStart: actions.PlayGame,
+      }),
+
+      state.waitingOnGamepadForPlayer !== null && subscriptions.WaitForGamepad({
+        index: state.waitingOnGamepadForPlayer,
+        players: state.players,
+        onButtonPress: actions.PlayerControls,
       }),
     ];
   },

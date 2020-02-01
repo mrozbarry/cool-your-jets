@@ -9,21 +9,18 @@ const makePlayer = (controls, name) => ({
   wins: 0,
 });
 const initialPlayers = [
-  makePlayer('keyboard|wasd', 'Player 1'),
-  makePlayer('keyboard|arrows', 'Player 2'),
+  makePlayer('', 'Player 1'),
+  makePlayer('', 'Player 2'),
   makePlayer('', 'Player 3'),
   makePlayer('', 'Player 4'),
 ];
 
-export const Initialize = () => [
-  {
-    hasGamepads: false,
-    players: initialPlayers,
-    playGame: false,
-    gameCountdown: null,
-  },
-  effects.PlayLoop('menu'),
-];
+export const Initialize = () => ({
+  waitingOnGamepadForPlayer: null,
+  players: initialPlayers,
+  playGame: false,
+  gameCountdown: null,
+});
 
 export const GameCountdown = (state, { remaining }) => ({
   ...state,
@@ -38,13 +35,20 @@ export const PlayerReady = (state, { index, ready }) => ({
   }),
 });
 
-export const PlayerControls = (state, { index, controls }) => ({
-  ...state,
-  players: state.players.map((player, playerIndex) => {
-    if (playerIndex !== index) return player;
-    return { ...player, controls };
-  }),
-});
+export const PlayerControls = (state, { index, controls }) => {
+  const waitingOnGamepadForPlayer = state.waitingOnGamepadForPlayer === index
+    ? null
+    : (controls === 'gamepad|-1' ? index : state.waitingOnGamepadForPlayer);
+
+  return {
+    ...state,
+    players: state.players.map((player, playerIndex) => {
+      if (playerIndex !== index) return player;
+      return { ...player, controls };
+    }),
+    waitingOnGamepadForPlayer,
+  };
+};
 
 export const PlayerColor = (state, { index }) => ({
   ...state,

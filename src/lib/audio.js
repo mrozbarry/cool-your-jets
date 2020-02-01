@@ -5,7 +5,6 @@ class AudioClip {
     const audioClip = new AudioClip(options);
     return audioClip.setUrl(url);
   }
-
   static cloneFrom(fromAudioClip) {
     const audioClip = new AudioClip(fromAudioClip.options);
     audioClip.source = fromAudioClip.source.cloneNode();
@@ -73,6 +72,7 @@ class AudioController {
       this.prepareAudio('menu', audio.BG_LOOP_MENU),
       this.prepareAudio('game', audio.BG_LOOP_NORMAL),
       this.prepareAudio('game-winner', audio.BG_LOOP_WINNER),
+      this.prepareAudio('game-winner-start', audio.SFX_WINNER),
     ];
   }
 
@@ -114,7 +114,7 @@ class AudioController {
       this.stopAudio(name);
     });
     this.playing.push(sfx);
-    // sfx.play();
+    sfx.play();
     return sfx;
   }
 

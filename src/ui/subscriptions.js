@@ -1,6 +1,3 @@
-import page from 'page';
-import AudioControl from '#/lib/audio';
-
 const StartGameFX = (dispatch, { count, onStart, onTick }) => {
   let remaining = count;
   let handle = null;
@@ -35,3 +32,33 @@ const GamepadFX = (dispatch, { onConnect }) => {
   };
 };
 export const Gamepad = props => [GamepadFX, props];
+
+const WaitForGamepadFX = (dispatch, { index, players, onButtonPress }) => {
+  const now = performance.now();
+
+  const otherGamepads = players
+    .filter(p => p.controls.startsWith('gamepad'))
+    .map(p => p.controls.split('|')[1])
+    .map(Number);
+
+  const checkButtons = () => {
+    const gamepads = navigator.getGamepads();
+    let gamepad;
+    for(gamepad of gamepads) {
+      if (!gamepad) continue;
+      if (gamepad && !otherGamepads.includes(gamepad.index) && gamepad.timestamp > now) {
+        console.log('gamepad detected', gamepad);
+        dispatch(onButtonPress, { index, controls: `gamepad|${gamepad.index}` });
+        break;
+      }
+    }
+  };
+
+  const handle = setInterval(checkButtons, 250);
+  checkButtons();
+
+  return () => {
+    clearInterval(handle);
+  };
+};
+export const WaitForGamepad = props => [WaitForGamepadFX, props];
