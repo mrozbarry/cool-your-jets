@@ -20,7 +20,6 @@ const websocket = WebsocketFactory('ws://localhost:1234', {
 
 const getClientId = async () => {
   const response = await fetch('/api/client/new');
-  console.log(response);
   const json = await response.json();
   return json.id;
 };
@@ -38,7 +37,7 @@ const viewLobby = async (id) => {
 const setupClient = async () => {
   const clientId = await getClientId();
   console.log('Got client id', clientId);
-  const playerInformation = await joinLobby(clientId);
+  console.log('My info', await joinLobby(clientId));
   console.log('Lobby (before ready):', await viewLobby(clientId));
 
   await websocket.open();
@@ -46,9 +45,56 @@ const setupClient = async () => {
 
   console.log('Lobby (after ready):', await viewLobby(clientId));
 
-  await websocket.close();
+  let inputs = {
+    thrust: 0,
+    turn: 0,
+    fire: 0,
+  };
 
-  console.log('Lobby (after disconnect):', await viewLobby(clientId));
+  const sendInputs = () => {
+    websocket.send({ type: 'input', inputs });
+  };
+
+  window.addEventListener('keydown', ({ code, repeat }) => {
+    if (repeat) return;
+    switch (code) {
+    case 'ArrowUp':
+      inputs.thrust = 1;
+      break;
+    case 'ArrowLeft':
+      inputs.turn = -1;
+      break;
+    case 'ArrowRight':
+      inputs.turn = 1;
+      break;
+    case 'ArrowDown':
+      inputs.fire = 1;
+      break;
+    }
+    sendInputs();
+  });
+
+  window.addEventListener('keyup', ({ code }) => {
+    switch (code) {
+    case 'ArrowUp':
+      inputs.thrust = 0;
+      break;
+    case 'ArrowLeft':
+    case 'ArrowRight':
+      inputs.turn = 0;
+      break;
+    case 'ArrowDown':
+      inputs.fire = 0;
+      break;
+
+    case 'Escape':
+      websocket.close();
+      viewLobby(clientId)
+        .then(lobby => console.log('Lobby (after disconnect):', lobby));
+      break;
+    }
+    sendInputs();
+  });
 };
 
 setupClient();

@@ -42,7 +42,9 @@ function connectWebsocketServer(httpServer, clients, game) {
   socketServer.on('connection', (client) => {
     client.on('message', (raw) => {
       middleware(
-        websocketMessageMiddleware,
+        [
+          ...websocketMessageMiddleware,
+        ],
         {
           message: JSON.parse(raw),
           game,
@@ -63,8 +65,6 @@ function connectWebsocketServer(httpServer, clients, game) {
       game.unready(clientId);
     });
   });
-
-  return socketServer;
 }
 
 function addGameRoutes(expressApp, clients, game) {
@@ -120,7 +120,7 @@ const server = http.createServer(app);
 const game = new Game();
 const clients = new Clients();
 
-const websocketServer = connectWebsocketServer(server, clients, game);
+connectWebsocketServer(server, clients, game);
 addGameRoutes(app, clients, game);
 
 useParcelBundler(app, process.argv.slice(-1)[0]);

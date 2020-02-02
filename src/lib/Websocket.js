@@ -53,7 +53,6 @@ const WebsocketFactory = (address, handlers = {}) => {
 
   const send = (payload) => {
     const string = JSON.stringify(payload);
-    console.log('sending', string);
     websocket.send(string);
   };
 

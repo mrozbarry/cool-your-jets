@@ -1,3 +1,9 @@
+import Simulation from './Simulation';
+import Player from './Player';
+import InputsMiddleware from '../game/Inputs';
+import ShipsMiddleware from '../game/Ships';
+import RelayMiddleware from '../game/Relay';
+
 class Game {
   constructor() {
     this.players = {};
@@ -6,20 +12,51 @@ class Game {
     this.lobby();
   }
 
+  get isInProgress() {
+    return !!this.simulation;
+  }
+
   lobby() {
     console.log('Setting game to lobby');
     for(const websocket of Object.values(this.websockets)) {
       websocket.close();
     }
     this.websockets = {};
-    this.isInProgress = false;
+    if (this.simulation) {
+      this.simulation.deinit();
+      delete this.simulation;
+    }
   }
 
   play() {
-    // Need at least 3 players
-    // All players must be ready
-    // All players must have a websocket connection
-    this.isInProgress = true;
+    const players = this.getPlayers();
+    const hasMinPlayers = players.length > 0; // FIXME: 3
+    const allReady = players.every(p => p.ready);
+
+    if (!hasMinPlayers || !allReady) return;
+
+    this.simulation = new Simulation({});
+
+    this.simulation.addMiddleware('inputs', new InputsMiddleware());
+    this.simulation.addMiddleware('ships', new ShipsMiddleware());
+    this.simulation.addMiddleware('relay', new RelayMiddleware());
+
+    this.simulation.init({
+      players: this.players,
+      game: this,
+    });
+
+    setInterval(() => this.simulation.step(Date.now()), 16);
+
+    this.broadcast({ type: 'start' });
+  }
+
+  broadcast(message) {
+    const serialized = JSON.stringify(message);
+    let ws;
+    for(ws of Object.values(this.websockets)) {
+      ws.send(serialized);
+    }
   }
 
   joinable() {
@@ -32,12 +69,9 @@ class Game {
   }
 
   join(id) {
-    const hue = Math.floor(Math.random() * 360);
-    const player = {};
+    this.players[id] = new Player();
 
-    this.players[id] = player;
-
-    return player;
+    return this.players[id];
   }
 
   hasJoined(id) {
@@ -54,10 +88,14 @@ class Game {
     if (this.players[id]) {
       console.log('OK associating websocket with player', this.players[id]);
       this.websockets[id] = websocket;
+      setTimeout(() => {
+        this.play();
+      }, 1);
       return true;
     }
 
     console.log('player with id does not exist', { id });
+
 
     return false;
   }
@@ -83,7 +121,7 @@ class Game {
   getPlayers() {
     return Object.keys(this.players)
       .map(id => ({
-        ...this.players[id],
+        ...this.players[id].toJson(),
         id,
         ready: !!this.websockets[id],
       }));
