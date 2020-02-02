@@ -1,0 +1,4 @@
+{
+  "ignore": ["./src/ui/*", "./src/post-game", "./src/assets"],
+  "watch": ["./src"]
+}
