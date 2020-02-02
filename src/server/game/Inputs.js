@@ -29,8 +29,6 @@ class Inputs extends Base {
         ...this.game.players[id].inputs,
         ...message.inputs,
       };
-
-      console.log('player', id, 'input', this.game.players[id].inputs);
     };
 
     websocket.addEventListener('message', listener);

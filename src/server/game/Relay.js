@@ -8,11 +8,9 @@ class Relay extends Base {
 
   postStep() {
     const ships = this.shipsMiddleware.ships.map(ship => ({
-      p: ship.body.interpolatedPosition,
+      p: Array.from(ship.body.interpolatedPosition),
       a: ship.body.interpolatedAngle,
     }));
-
-    console.log('broadcasting game state', ships);
 
     this.game.broadcast({
       type: 'ships',

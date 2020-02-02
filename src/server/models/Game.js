@@ -3,6 +3,7 @@ import Player from './Player';
 import InputsMiddleware from '../game/Inputs';
 import ShipsMiddleware from '../game/Ships';
 import RelayMiddleware from '../game/Relay';
+import { performance } from 'perf_hooks';
 
 class Game {
   constructor() {
@@ -10,6 +11,8 @@ class Game {
     this.websockets = {};
 
     this.lobby();
+
+    this.playTick = this.playTick.bind(this);
   }
 
   get isInProgress() {
@@ -46,9 +49,14 @@ class Game {
       game: this,
     });
 
-    setInterval(() => this.simulation.step(Date.now()), 16);
+    this.playTick();
 
     this.broadcast({ type: 'start' });
+  }
+
+  playTick() {
+    this.simulation.step(performance.now());
+    this.playTickHandle = setImmediate(this.playTick);
   }
 
   broadcast(message) {

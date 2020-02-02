@@ -63,7 +63,6 @@ export default class Game {
   runMiddlewareTickStart(delta) {
     let m;
     for(m of this.middleware) {
-      if (!m.instance.enabled) continue;
       m.instance.tickStart(this, delta);
     }
   }
@@ -71,7 +70,6 @@ export default class Game {
   runMiddlewarePreStep() {
     let m;
     for(m of this.middleware) {
-      if (!m.instance.enabled) continue;
       m.instance.preStep(this, this.timestep);
     }
   }
@@ -79,7 +77,6 @@ export default class Game {
   runMiddlewarePostStep() {
     let m;
     for(m of this.middleware) {
-      if (!m.instance.enabled) continue;
       m.instance.postStep(this, this.timestep);
     }
   }
@@ -87,7 +84,6 @@ export default class Game {
   runMiddlewareTickEnd(delta) {
     let m;
     for(m of this.middleware) {
-      if (!m.instance.enabled) continue;
       m.instance.tickEnd(this, delta);
     }
   }

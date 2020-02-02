@@ -27,8 +27,6 @@ class Ships extends Base {
 
     simulation.world.addBody(body);
 
-    console.log('Ships.createShip', player);
-
     return {
       body,
       shape,
@@ -46,7 +44,7 @@ class Ships extends Base {
   }
 
   init(simulation, data) {
-    this.players = data.game.getPlayers();
+    this.players = Object.values(data.game.players);
     this.ships = this.players.map(player => this.createShip(simulation, player));
   }
 
@@ -56,9 +54,7 @@ class Ships extends Base {
       const ship = this.ships[index];
 
       ship.body.applyForceLocal([0, player.inputs.thrust * -simulation.thrustForce]);
-      ship.body.angularVelocity = Math.min(-1, Math.max(1, player.inputs.turn)) *
-        simulation.turnVelocity *
-        delta;
+      ship.body.angularVelocity = player.inputs.turn * (simulation.turnVelocity * delta);
     }
   }
 }
