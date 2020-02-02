@@ -3,6 +3,20 @@ import ui from './ui';
 import game from './game';
 import postGame from './post-game';
 import AudioControl from './lib/audio';
+import WebsocketFactory from './lib/Websocket';
+
+const websocket = WebsocketFactory('ws://localhost:1234', {
+  message: [
+    (message) => {
+      console.log('server sent', message);
+    },
+  ]
+});
+
+websocket.open()
+  .then(() => {
+    websocket.send({ type: 'hello' });
+  });
 
 const uiContainer = document.querySelector('ui-container');
 const gameContainer = document.querySelector('game-container');
