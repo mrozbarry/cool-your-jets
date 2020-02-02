@@ -43,15 +43,18 @@ const WebsocketFactory = (address, handlers = {}) => {
 
   const close = () => {
     return new Promise((resolve, reject) => {
-      websocket.addEventListener('close', () => {
-        websocket = null;
-      }, { once: true });
+      if (!websocket) {
+        return reject();
+      }
       websocket.close();
+      resolve();
     });
   };
 
   const send = (payload) => {
-    websocket.send(JSON.stringify(payload));
+    const string = JSON.stringify(payload);
+    console.log('sending', string);
+    websocket.send(string);
   };
 
   return {
