@@ -36,6 +36,12 @@ const websocket = WebsocketFactory('ws://localhost:1234', {
   ],
 });
 
+const withAuth = (url, clientId) => fetch(url, {
+  headers: {
+    'X-CLIENT-ID': clientId,
+  },
+});
+
 
 const getClientId = async () => {
   const response = await fetch('/api/client/new');
@@ -44,12 +50,12 @@ const getClientId = async () => {
 };
 
 const joinLobby = async (id) => {
-  const response = await fetch(`/api/client/${id}/join`);
+  const response = await withAuth('/api/lobby/join', id);
   return response.json();
 };
 
 const viewLobby = async (id) => {
-  const response = await fetch(`/api/client/${id}/lobby`);
+  const response = await withAuth('/api/lobby', id);
   return response.json();
 };
 
