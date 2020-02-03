@@ -12,6 +12,8 @@ class Game {
 
     this.lobby();
 
+    this.readyToPlayHandle = null;
+
     this.playTick = this.playTick.bind(this);
   }
 
@@ -32,12 +34,6 @@ class Game {
   }
 
   play() {
-    const players = this.getPlayers();
-    const hasMinPlayers = players.length > 0; // FIXME: 3
-    const allReady = players.every(p => p.ready);
-
-    if (!hasMinPlayers || !allReady) return;
-
     this.simulation = new Simulation({});
 
     this.simulation.addMiddleware('inputs', new InputsMiddleware());
@@ -86,6 +82,32 @@ class Game {
     return !!this.players[id];
   }
 
+  getReadyToPlay() {
+    this.cancelCountdown();
+    const players = this.getPlayers();
+    const hasMinPlayers = players.length > 0; // FIXME: 3
+    const allReady = players.every(p => p.ready);
+
+    if (!hasMinPlayers || !allReady) return;
+
+    this.broadcastCountdown();
+  }
+
+  doCountdown(seconds) {
+    this.broadcase({ type: 'countdown', seconds });
+
+    if (seconds === 0) return this.play();
+
+    this.readyToPlayHandle = setTimeout(() => {
+      this.doCountdown(seconds - 1);
+    }, 1000);
+  }
+
+  cancelCountdown() {
+    this.broadcase({ type: 'countdown:cancel' });
+    clearTimeout(this.readyToPlayHandle);
+  }
+
   ready(id, websocket) {
     if (this.websockets[id]) {
       console.log('ERR websocket already associated to player');
@@ -96,9 +118,7 @@ class Game {
     if (this.players[id]) {
       console.log('OK associating websocket with player', this.players[id]);
       this.websockets[id] = websocket;
-      setTimeout(() => {
-        this.play();
-      }, 1);
+      this.getReadyToPlay();
       return true;
     }
 
@@ -119,6 +139,7 @@ class Game {
 
   unready(id) {
     if (this.players[id]) {
+      this.cancelCountdown();
       delete this.websockets[id];
       return true;
     }

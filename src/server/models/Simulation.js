@@ -29,7 +29,7 @@ export default class Game {
     this.world.on('postStep', this.runMiddlewarePostStep.bind(this));
   }
 
-  onEndWithWinner(id) {}
+  onEndWithWinner(_id) {}
   onEndWithoutWinner() {}
 
   endWithWinner(id) {
