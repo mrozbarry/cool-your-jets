@@ -3,6 +3,17 @@ import * as subscriptions from '#/ui/subscriptions';
 import * as actions from '#/ui/actions';
 import { grid, playerSetup, overrideStyles } from '#/ui/components';
 
+const styles = {
+  td: {
+    padding: '8px',
+    fontSize: '1.6rem',
+  },
+
+  tdPlayer: {
+    borderTop: '3px white solid',
+  },
+};
+
 export default (node) => app({
   init: actions.Initialize,
 
@@ -11,55 +22,61 @@ export default (node) => app({
       return h('div');
     }
 
-    const controlOptions = [
-      ['', 'Not Playing'],
-      ['keyboard|wasd', 'Keyboard - WASD'],
-      ['keyboard|arrows', 'Keyboard - Arrows'],
-      ['gamepad|-1', 'Gamepad'],
-    ];
-
     return h('div', {
-      style: { position: 'relative' },
+      style: {
+        display: 'grid',
+        gridTemplateColumns: 'auto 500px',
+      },
     }, [
-      h(
-        grid,
-        { count: state.players.length },
-        state.players.map((p, index) => playerSetup({
-          ...p,
-          index,
-          controlOptions,
-          gameCountdown: state.gameCountdown,
+      h('div', null, [
+        h('pre', null, JSON.stringify(state, null, 2)),
+      ]),
+
+      h('table', { style: { border: '3px white solid', borderCollapse: 'collapse' } }, [
+        h('thead', null, [
+          h('tr', null, [
+            h('td', { style: styles.td }, 'Ship'),
+            h('td', { style: styles.td }, 'Ship'),
+            h('td', { style: styles.td }, 'Name'),
+            h('td', { style: styles.td }, 'Ready'),
+          ]),
+        ]),
+        h('tbody', null, state.players.map(p => {
+          const isLocal = p.clientId === state.clientId;
+          const identifier = `${p.clientId}.${p.id}`;
+          const localGamepad = isLocal && state.gamepadPlayers.find(gpp => gpp.identifier === identifier);
+          const marker = isLocal
+            ? (localGamepad ? `GP${localGamepad.index}` : 'KB')
+            : 'NW';
+
+          return h(
+            'tr',
+            null,
+            [
+              h('td', { style: { ...styles.td, ...styles.tdPlayer, borderRight: '3px white solid' } },
+                marker,
+              ),
+              h('td', { style: { ...styles.td, ...styles.tdPlayer, borderRight: '3px white solid', backgroundColor: `hsl(${p.hue}, 100%, 50%)` } },
+              ),
+              h('td', {
+                style: { ...styles.td, ...styles.tdPlayer, borderRight: '3px white solid' },
+                contentEditable: isLocal,
+                oninput: [
+                  (state, text) => {
+                    console.log('Updating name', text);
+                    return state;
+                  },
+                  (event) => event.target.innerText,
+                ],
+              },
+                p.name,
+              ),
+              h('td', { style: { ...styles.td, ...styles.tdPlayer } },
+                p.ready ? 'Yes' : 'No',
+              ),
+            ],
+          );
         })),
-      ),
-      state.addingPlayer && h('div', {
-        style: {
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          marginTop: '-20vh',
-          marginLeft: '-20vw',
-          width: '40vw',
-          height: '40vh',
-          border: '3px white solid',
-          backgroundColor: 'black',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          padding: '10vh 0',
-        },
-      }, [
-        h('h1', null, 'Press Any Button To Pick Gamepad'),
-        h('div', { style: { flex: 1 } }),
-        h('button', {
-          type: 'button',
-          onclick: [actions.PlayerControls, { index: state.waitingOnGamepadForPlayer, controls: '' }],
-          style: {
-            ...overrideStyles,
-            borderWidth: '3px',
-            padding: '1rem',
-          },
-        }, 'Cancel'),
       ]),
     ]);
   },
@@ -72,13 +89,24 @@ export default (node) => app({
       .map(gpp => gpp.index)
       .join(',');
 
+    const canJoin = state.clientId && !state.addingPlayer;
+
     return [
-      subscriptions.WaitForGamepad({
-        clientId: state.clientId,
-        gamepadIndexes,
-        onGamepadDiscovered: actions.AddGamepad,
-        onAddingPlayer: actions.LockAddingPlayer,
-      }),
+      canJoin && [
+        subscriptions.WaitForGamepad({
+          clientId: state.clientId,
+          gamepadIndexes,
+          onGamepadDiscovered: actions.AddGamepad,
+          onPlayerLock: actions.LockAddingPlayer,
+          onPlayerUnlock: actions.UnlockAddingPlayer,
+        }),
+        !state.keyboardPlayer && subscriptions.WaitForKeyboard({
+          clientId: state.clientId,
+          onKeyboardDiscovered: actions.AddKeyboard,
+          onPlayerLock: actions.LockAddingPlayer,
+          onPlayerUnlock: actions.UnlockAddingPlayer,
+        }),
+      ],
     ];
   },
 

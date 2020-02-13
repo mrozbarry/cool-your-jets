@@ -5,11 +5,10 @@ export const Initialize = () => [
     clientId: null,
     players: [],
     gamepadPlayers: [],
-    hasKeyboard: false,
+    keyboardPlayer: null,
     addingPlayer: false,
     exit: false,
-    ships: {},
-  },
+    ships: {}, },
   effects.Init({
     onClientId: SetClientId,
     onShips: SetShips,
@@ -31,16 +30,31 @@ export const UpdatePlayersFromLobby = (state, { players }) => ({
   players,
 });
 
-export const AddGamepad = (state, { index, identifier }) => ({
+export const AddGamepad = (state, { gamepad, player }) => ({
   ...state,
+  players: state.players.concat(player),
   gamepadPlayers: [
     ...state.gamepadPlayers,
-    { index, identifier },
+    { index: gamepad.index, identifier: `${state.clientId}.${player.id}` },
   ],
+  addingPlayer: false,
+});
+
+export const AddKeyboard = (state, { player }) => ({
+  ...state,
+  players: state.players.concat(player),
+  keyboardPlayer: {
+    identifier: `${state.clientId}.${player.id}`,
+  },
   addingPlayer: false,
 });
 
 export const LockAddingPlayer = state => ({
   ...state,
   addingPlayer: true,
+});
+
+export const UnlockAddingPlayer = state => ({
+  ...state,
+  addingPlayer: false,
 });

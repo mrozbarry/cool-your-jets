@@ -1,53 +1,76 @@
 import * as api from './api';
 
+const defer = (fn) => new Promise((resolve) => {
+  setTimeout(() => {
+    fn();
+    resolve();
+  }, 1);
+});
+
 const WaitForGamepadFX = (dispatch, {
   clientId,
   gamepadIndexes,
-  onAddingPlayer,
+  onPlayerLock,
+  onPlayerUnlock,
   onGamepadDiscovered,
 }) => {
-  let dead = false;
   const id = Math.random().toString(36).slice(2);
-  console.log('Waiting for gamepads...', id);
-  const now = performance.now();
+  let dead = false;
   let handle = null;
+  let minTime = null;
+
+  const onGamepadConnected = (event) => {
+    minTime = event.gamepad.timestamp + 1;
+    handle = requestAnimationFrame(checkButtons);
+  };
 
   const takenGamepadIndexes = gamepadIndexes
     ? gamepadIndexes.split(',').map(Number)
     : [];
 
-  console.log('Observing taken indexes', gamepadIndexes, takenGamepadIndexes);
-
+  let gamepad;
   const checkButtons = async () => {
     if (dead) return;
-    const gamepads = navigator.getGamepads();
-    let gamepad;
+
+    const gamepads = Array.from(navigator.getGamepads())
+      .filter(gp => gp)
+      .filter(gp => gp.connected)
+      .filter(gp => !takenGamepadIndexes.includes(gp.index));
+
     for(gamepad of gamepads) {
-      if (!gamepad) continue;
-      if (takenGamepadIndexes.includes(gamepad.index)) {
-        console.log('checkButtons', id, 'skipping', gamepad.index, 'since it is already taken');
-        continue;
-      }
-      if (gamepad.timestamp < now) {
-        console.log('checkButtons', id, 'skipping', gamepad.index, 'since it has not been updated in a while');
+      if (gamepad.timestamp < minTime) {
         continue; 
       }
 
-      dispatch(onAddingPlayer);
-      const player = await api.addPlayer(clientId);
-      console.log('gamepad discovered', gamepad);
-      dispatch(onGamepadDiscovered, {
-        index: gamepad.index,
-        identifier: player.identifier,
-      });
+      try {
+        dispatch(onPlayerLock);
+        const player = await api.addPlayer(clientId);
+        await defer(() => dispatch(onGamepadDiscovered, {
+          gamepad: {
+            index: gamepad.index,
+            id: gamepad.id,
+          },
+          player,
+        }));
+        dead = true;
+      } catch (err) {
+        console.log('Error adding player', err);
+        dead = true;
+        dispatch(onPlayerUnlock);
+      }
     }
     handle = requestAnimationFrame(checkButtons);
   };
 
-  handle = requestAnimationFrame(checkButtons);
-  checkButtons();
+  const gamepads = Array.from(navigator.getGamepads()).filter(gp => gp);
+  if (gamepads.length > 0) {
+    handle = requestAnimationFrame(checkButtons);
+  } else {
+    window.addEventListener('gamepadconnected', onGamepadConnected, { once: true });
+  }
 
   return () => {
+    window.removeEventListener('gamepadconnected', onGamepadConnected);
     dead = true;
     console.log('Stopped waiting for gamepads', id);
     cancelAnimationFrame(handle);
@@ -57,19 +80,28 @@ export const WaitForGamepad = props => [WaitForGamepadFX, props];
 
 const WaitForKeyboardFx = (dispatch, {
   clientId,
-  onAddingPlayer,
+  onPlayerLock,
+  onPlayerUnlock,
   onKeyboardDiscovered,
 }) => {
-  const onKeyDown = async () => {
-    dispatch(onAddingPlayer);
-    dispatch(onKeyboardDiscovered);
-    const player = await api.addPlayer(clientId);
-    dispatch(onKeyboardDiscovered, {
-      identifier: player.identifier,
-    });
+  const onKeyDown = async (event) => {
+    if (event.code !== 'ArrowDown') return;
+    if (event.target.matches('td')) return;
+
+    try {
+      dispatch(onPlayerLock);
+      const player = await api.addPlayer(clientId);
+      dispatch(onKeyboardDiscovered, {
+        identifier: player.identifier,
+        player,
+      });
+    } catch (err) {
+      console.log('Error adding player', err);
+      dispatch(onPlayerUnlock);
+    }
   };
 
-  document.addEventListener('keydown', onKeyDown, { once: true });
+  document.addEventListener('keydown', onKeyDown);
 
   return () => {
     document.removeEventListener('keydown', onKeyDown);
