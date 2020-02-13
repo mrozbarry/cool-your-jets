@@ -1,20 +1,12 @@
-import AudioControl from '#/lib/audio';
 import page from 'page';
+import * as api from './api';
 
-const PlayLoopFX = (_, name) => {
-  const attemptPlay = () => {
-    requestIdleCallback(() => {
-      try {
-        AudioControl.playLoop(name);
-      } catch (err) {
-        console.log('unable to play', err);
-      }
-    });
-  };
-
-  attemptPlay();
+const InitFX = async (dispatch, { onClientId, onShips }) => {
+  const { id, ships } = await api.getClientId();
+  dispatch(onClientId, { clientId: id });
+  dispatch(onShips, { ships });
 };
-export const PlayLoop = props => [PlayLoopFX, props];
+export const Init = props => [InitFX, props];
 
 const PageNavigateFX = (_, path) => {
   page.show(path);

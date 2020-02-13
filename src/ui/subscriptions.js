@@ -1,64 +1,61 @@
-const StartGameFX = (dispatch, { count, onStart, onTick }) => {
-  let remaining = count;
+import * as api from './api';
+
+const WaitForGamepadFX = (dispatch, {
+  clientId,
+  gamepadPlayers,
+  onAddingPlayer,
+  onGamepadDiscovered,
+}) => {
+  const now = performance.now();
   let handle = null;
 
-  const tick = () => {
-    if (remaining === 0) {
-      dispatch(onStart);
-    } else {
-      dispatch(onTick, { remaining });
-      remaining -= 1;
-      handle = setTimeout(tick, 1000);
-    }
-  };
+  const takenGamepadIndexes = gamepadPlayers.map(gp => gp.index);
 
-  setTimeout(() => {
-    tick();
-  }, 1);
-
-  return () => {
-    clearTimeout(handle);
-  };
-};
-export const StartGame = props => [StartGameFX, props];
-
-
-const GamepadFX = (dispatch, { onConnect }) => {
-  const connected = () => dispatch(onConnect);
-  window.addEventListener('gamepadconnected', connected);
-
-  return () => {
-    window.removeEventListener('gamepadconnected', connected);
-  };
-};
-export const Gamepad = props => [GamepadFX, props];
-
-const WaitForGamepadFX = (dispatch, { index, players, onButtonPress }) => {
-  const now = performance.now();
-
-  const otherGamepads = players
-    .filter(p => p.controls.startsWith('gamepad'))
-    .map(p => p.controls.split('|')[1])
-    .map(Number);
-
-  const checkButtons = () => {
+  const checkButtons = async () => {
     const gamepads = navigator.getGamepads();
     let gamepad;
     for(gamepad of gamepads) {
       if (!gamepad) continue;
-      if (gamepad && !otherGamepads.includes(gamepad.index) && gamepad.timestamp > now) {
-        console.log('gamepad detected', gamepad);
-        dispatch(onButtonPress, { index, controls: `gamepad|${gamepad.index}` });
-        break;
-      }
+      if (takenGamepadIndexes.includes(gamepad.index)) continue;
+      if (gamepad.timestamp < now) continue; 
+
+      dispatch(onAddingPlayer);
+      const player = await api.addPlayer(clientId);
+      dispatch(onGamepadDiscovered, {
+        index: gamepad.index,
+        identifier: player.identifier,
+      });
     }
+    handle = requestAnimationFrame(checkButtons);
   };
 
-  const handle = setInterval(checkButtons, 250);
+  handle = requestAnimationFrame(checkButtons);
   checkButtons();
 
   return () => {
-    clearInterval(handle);
+    cancelAnimationFrame(handle);
   };
 };
 export const WaitForGamepad = props => [WaitForGamepadFX, props];
+
+const WaitForKeyboardFx = (dispatch, {
+  clientId,
+  onAddingPlayer,
+  onKeyboardDiscovered,
+}) => {
+  const onKeyDown = async () => {
+    dispatch(onAddingPlayer);
+    dispatch(onKeyboardDiscovered);
+    const player = await api.addPlayer(clientId);
+    dispatch(onKeyboardDiscovered, {
+      identifier: player.identifier,
+    });
+  };
+
+  document.addEventListener('keydown', onKeyDown, { once: true });
+
+  return () => {
+    document.removeEventListener('keydown', onKeyDown);
+  };
+};
+export const WaitForKeyboard = props => [WaitForKeyboardFx, props];

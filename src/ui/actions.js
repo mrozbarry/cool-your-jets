@@ -1,88 +1,46 @@
 import * as effects from '#/ui/effects';
-import pipe from '#/lib/pipe';
 
-const makePlayer = (controls, name) => ({
-  controls,
-  name,
-  ready: false,
-  color: [Math.round(Math.random() * 359), 100, 50],
-  wins: 0,
-});
-const initialPlayers = [
-  makePlayer('', 'Player 1'),
-  makePlayer('', 'Player 2'),
-  makePlayer('', 'Player 3'),
-  makePlayer('', 'Player 4'),
+export const Initialize = () => [
+  {
+    clientId: null,
+    players: [],
+    gamepadPlayers: [],
+    hasKeyboard: false,
+    addingPlayer: false,
+    exit: false,
+    ships: {},
+  },
+  effects.Init({
+    onClientId: SetClientId,
+    onShips: SetShips,
+  }),
 ];
 
-export const Initialize = () => ({
-  waitingOnGamepadForPlayer: null,
-  players: initialPlayers,
-  playGame: false,
-  gameCountdown: null,
-});
-
-export const GameCountdown = (state, { remaining }) => ({
+export const SetClientId = (state, { clientId }) => ({
   ...state,
-  gameCountdown: remaining,
+  clientId,
 });
 
-export const PlayerReady = (state, { index, ready }) => ({
+export const SetShips = (state, { ships }) => ({
   ...state,
-  players: state.players.map((player, playerIndex) => {
-    if (playerIndex !== index) return player;
-    return { ...player, ready };
-  }),
+  ships,
 });
 
-export const PlayerControls = (state, { index, controls }) => {
-  const waitingOnGamepadForPlayer = state.waitingOnGamepadForPlayer === index
-    ? null
-    : (controls === 'gamepad|-1' ? index : state.waitingOnGamepadForPlayer);
-
-  return {
-    ...state,
-    players: state.players.map((player, playerIndex) => {
-      if (playerIndex !== index) return player;
-      return { ...player, controls };
-    }),
-    waitingOnGamepadForPlayer,
-  };
-};
-
-export const PlayerColor = (state, { index }) => ({
+export const UpdatePlayersFromLobby = (state, { players }) => ({
   ...state,
-  players: state.players.map((player, playerIndex) => {
-    if (playerIndex !== index) return player;
-    return { ...player, color: [Math.round(Math.random() * 359), 100, 50] };
-  }),
+  players,
 });
 
-export const PlayerName = (state, { index, name }) => ({
+export const AddGamepad = (state, { index, identifier }) => ({
   ...state,
-  players: state.players.map((player, playerIndex) => {
-    if (playerIndex !== index) return player;
-    return { ...player, name };
-  }),
+  gamepadPlayers: [
+    ...state.gamepadPlayers,
+    { index, identifier },
+  ],
+  addingPlayer: false,
 });
 
-export const PlayGame = state => {
-  const config = pipe([
-    players => players.filter(p => p.controls),
-    players => players.map(p => ({
-      name: p.name,
-      controls: p.controls,
-      color: p.color,
-      wins: p.wins,
-    })),
-    JSON.stringify,
-    btoa,
-  ], state.players);
-
-  return [
-    { ...state, playGame: true },
-    effects.PageNavigate(`/play/${config}`),
-  ];
-};
-
-export const GamepadConnected = state => ({ ...state, hasGamepads: true });
+export const LockAddingPlayer = state => ({
+  ...state,
+  addingPlayer: true,
+});

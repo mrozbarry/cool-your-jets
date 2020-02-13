@@ -172,7 +172,7 @@ export default (node) => app({
   init: actions.Initialize,
 
   view: state => {
-    if (state.playGame) {
+    if (state.exit) {
       return h('div');
     }
 
@@ -196,7 +196,7 @@ export default (node) => app({
           gameCountdown: state.gameCountdown,
         })),
       ),
-      state.waitingOnGamepadForPlayer !== null && h('div', {
+      state.addingPlayer && h('div', {
         style: {
           position: 'absolute',
           top: '50%',
@@ -230,26 +230,13 @@ export default (node) => app({
   },
 
   subscriptions: state => {
-    if (state.playGame) return [];
-
-    const availablePlayers = state.players.filter(p => p.controls).length;
-    const canStartGame = availablePlayers > 1 && state.players.filter(p => p.ready).length === availablePlayers;
+    if (state.exit) return [];
 
     return [
-      !state.hasGamepads && subscriptions.Gamepad({
-        onConnect: actions.GamepadConnected,
-      }),
-
-      canStartGame && subscriptions.StartGame({
-        count: 5,
-        onTick: actions.GameCountdown,
-        onStart: actions.PlayGame,
-      }),
-
-      state.waitingOnGamepadForPlayer !== null && subscriptions.WaitForGamepad({
-        index: state.waitingOnGamepadForPlayer,
-        players: state.players,
-        onButtonPress: actions.PlayerControls,
+      subscriptions.WaitForGamepad({
+        clientId: state.clientId,
+        gamepadPlayers: state.gamepadPlayers,
+        onGamepadDiscovered: actions.AddGamepad,
       }),
     ];
   },
