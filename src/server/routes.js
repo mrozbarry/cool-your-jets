@@ -1,11 +1,14 @@
 import { Router } from 'express';
+import morgan from 'morgan';
 import ships from './ships';
 
 export default (clients, game) => {
   const router = Router();
 
+  router.use(morgan('combined'));
+
   const mustHaveActiveId = (request, response, next) => {
-    const clientId = request.headers['X-CLIENT-ID'];
+    const clientId = request.headers['x-client-id'];
 
     if (!clients.touch(clientId)) {
       return response.status(401).json({
