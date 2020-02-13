@@ -66,7 +66,7 @@ const setupClient = async () => {
   console.log('Lobby (before ready):', await viewLobby(clientId));
 
   await websocket.open();
-  await websocket.send({ type: 'ready', id: clientId });
+  await websocket.send({ type: 'player:add', index: 0 });
 
   console.log('Lobby (after ready):', await viewLobby(clientId));
 
