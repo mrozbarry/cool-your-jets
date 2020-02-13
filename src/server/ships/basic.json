@@ -1,0 +1,12 @@
+{
+  "name": "Basic",
+  "vertices": [
+    [0, -20],
+    [12, 20],
+    [-12, 20]
+  ],
+  "indexes": {
+    "head": [0],
+    "thrusters": [1, 2]
+  }
+}

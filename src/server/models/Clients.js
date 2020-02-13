@@ -1,3 +1,5 @@
+import Client from './Client';
+
 class Clients {
   constructor() {
     this.clients = {};
@@ -19,7 +21,7 @@ class Clients {
     this._pruneOldClients();
 
     if (this.clients[id]) {
-      this.clients[id] = Date.now();
+      this.clients[id].touch();
       return true;
     }
     return false;
@@ -29,7 +31,7 @@ class Clients {
     const id = Math.random().toString(36).slice(2);
     if (this.has(id)) return this._add();
 
-    this.clients[id] = Date.now();
+    this.clients[id] = new Client(id);
 
     return id;
   }
@@ -37,7 +39,7 @@ class Clients {
   _pruneOldClients() {
     const fifteenMinutesAgo = Date.now() - (15 * 60 * 1000);
     for(const id of Object.keys(this.clients)) {
-      if (this.clients[id] >= fifteenMinutesAgo) continue;
+      if (this.clients[id].lastSeen >= fifteenMinutesAgo) continue;
 
       delete this.clients[id];
     }

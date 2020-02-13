@@ -2,6 +2,7 @@ import ParcelBundler from 'parcel-bundler';
 import * as http from 'http';
 import Express from 'express';
 import path from 'path';
+import Lobby from './models/Lobby';
 import Game from './models/Game';
 import Clients from './models/Clients';
 import routes from './routes';
@@ -31,7 +32,8 @@ function runServer(httpServer, port) {
 const app = Express();
 const server = http.createServer(app);
 
-const game = new Game();
+const lobby = new Lobby();
+const game = new Game(lobby);
 const clients = new Clients();
 
 connectWebsocketServer(server, clients, game);

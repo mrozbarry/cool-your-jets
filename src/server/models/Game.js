@@ -3,14 +3,15 @@ import Player from './Player';
 import InputsMiddleware from '../game/Inputs';
 import ShipsMiddleware from '../game/Ships';
 import RelayMiddleware from '../game/Relay';
+import Connection from './Connection';
 import { performance } from 'perf_hooks';
 
 class Game {
-  constructor() {
-    this.players = {};
-    this.websockets = {};
+  constructor(lobby) {
+    this.lobby = lobby;
+    this.connections = [];
 
-    this.lobby();
+    this.openLobby();
 
     this.readyToPlayHandle = null;
 
@@ -21,19 +22,20 @@ class Game {
     return !!this.simulation;
   }
 
-  lobby() {
+  openLobby() {
     console.log('Setting game to lobby');
-    for(const websocket of Object.values(this.websockets)) {
-      websocket.close();
+
+    for(const connection of this.connections) {
+      connection.close();
     }
-    this.websockets = {};
+    this.connections = [];
     if (this.simulation) {
       this.simulation.deinit();
       delete this.simulation;
     }
   }
 
-  play() {
+  openGame() {
     this.simulation = new Simulation({});
 
     this.simulation.addMiddleware('inputs', new InputsMiddleware());
@@ -48,6 +50,25 @@ class Game {
     this.playTick();
 
     this.broadcast({ type: 'start' });
+  }
+
+  connect(websocket) {
+    this.connections.push(new Connection(this, websocket));
+    return true;
+  }
+
+  disconnect(id) {
+    for(const key of Object.keys(this.players)) {
+      const clientId = key.split('.')[0];
+      if (clientId === id) {
+        delete this.players[key];
+      }
+    }
+    const connectionIndex = this.connections.findIndex(c => c.clientId === id);
+    if (connectionIndex >= 0) {
+      const [connection] = this.connections.splice(connectionIndex, 1);
+      connection.close();
+    }
   }
 
   playTick() {
@@ -72,14 +93,16 @@ class Game {
     return true;
   }
 
-  join(id) {
-    this.players[id] = new Player();
+  join([id, index]) {
+    const key = `${id}.${index}`;
+    this.players[key] = new Player();
 
-    return this.players[id];
+    return this.players[key];
   }
 
-  hasJoined(id) {
-    return !!this.players[id];
+  hasJoined([id, index]) {
+    const key = `${id}.${index}`;
+    return !!this.players[key];
   }
 
   getReadyToPlay() {
@@ -108,33 +131,17 @@ class Game {
     clearTimeout(this.readyToPlayHandle);
   }
 
-  ready(id, websocket) {
-    if (this.websockets[id]) {
-      console.log('ERR websocket already associated to player');
-      // TODO: Maybe close websocket
+  ready([id, index]) {
+    const key = `${id}.${index}`;
+
+    if (!this.players[key]) {
+      console.log('player with id does not exist', { id });
       return false;
     }
 
-    if (this.players[id]) {
-      console.log('OK associating websocket with player', this.players[id]);
-      this.websockets[id] = websocket;
-      this.getReadyToPlay();
-      return true;
-    }
+    this.players[key].ready = true;
 
-    console.log('player with id does not exist', { id });
-
-
-    return false;
-  }
-
-  idByWebsocket(websocket) {
-    for(const id of Object.keys(this.websockets)) {
-      if (this.websockets[id] === websocket) {
-        return id;
-      }
-    }
-    return null;
+    return true;
   }
 
   unready(id) {
@@ -149,11 +156,7 @@ class Game {
 
   getPlayers() {
     return Object.keys(this.players)
-      .map(id => ({
-        ...this.players[id].toJson(),
-        id,
-        ready: !!this.websockets[id],
-      }));
+      .map(key => this.players[key].toPublicJson());
   }
 
 }

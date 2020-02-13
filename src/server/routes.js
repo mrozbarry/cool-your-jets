@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import ships from './ships';
 
 export default (clients, game) => {
   const router = Router();
@@ -18,25 +19,28 @@ export default (clients, game) => {
     next();
   };
 
-  router.get('/client/new', (_request, response) => {
+  router.get('/client/create', (_request, response) => {
     const id = clients.add();
 
-    return response.status(201).json({ id }).end();
+    return response.status(201).json({
+      id,
+      ships,
+    }).end();
   });
 
   router.get('/lobby', mustHaveActiveId, (_request, response) => {
     return response.status(200).json(game.getPlayers()).end();
   });
 
-  router.get('/lobby/join', mustHaveActiveId, (request, response) => {
+  router.get('/lobby/players/create', mustHaveActiveId, (request, response) => {
     const { clientId } = request;
+    const player = game.lobby.playerAdd(clientId);
+    return response.status(200).json(player).end();
+  });
 
-    if (game.joinable(clientId) && !game.hasJoined(clientId)) {
-      const player = game.join(clientId);
-      return response.status(201).json(player).end();
-    }
-
-    return response.status(403).end();
+  router.get('/lobby/players/:identifier/delete', mustHaveActiveId, (request, response) => {
+    game.lobby.playerRemove(request.params.identifier);
+    return response.status(204).end();
   });
 
   return router;
