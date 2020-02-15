@@ -3,13 +3,16 @@ import Client from './Client';
 class Clients {
   constructor() {
     this.clients = {};
-    this.blacklist = {};
   }
 
   add() {
     this._pruneOldClients();
 
     return this._add();
+  }
+
+  get(clientId) {
+    return this.clients[clientId];
   }
 
   has(id) {

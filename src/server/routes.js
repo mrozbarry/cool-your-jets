@@ -2,7 +2,8 @@ import { Router } from 'express';
 import morgan from 'morgan';
 import ships from './ships';
 
-export default (clients, game) => {
+export default (node) => {
+  const { clients } = node;
   const router = Router();
 
   router.use(morgan('combined'));
@@ -32,17 +33,34 @@ export default (clients, game) => {
   });
 
   router.get('/lobby', mustHaveActiveId, (_request, response) => {
-    return response.status(200).json(game.getPlayers()).end();
+    return response
+      .status(200)
+      .json(node.players.map(p => p.toPublicJson()))
+      .end();
   });
 
   router.get('/lobby/players/create', mustHaveActiveId, (request, response) => {
     const { clientId } = request;
-    const player = game.lobby.playerAdd(clientId);
-    return response.status(200).json(player).end();
+    const player = node.addPlayer(clientId);
+    node.broadcast({ type: 'lobby:update' });
+    return response
+      .status(200)
+      .json(player.toPublicJson())
+      .end();
   });
 
   router.get('/lobby/players/:identifier/delete', mustHaveActiveId, (request, response) => {
-    game.lobby.playerRemove(request.params.identifier);
+    const identifier = request.params.identifier.split('.');
+    const [clientId, playerId] = identifier;
+
+    if (clientId !== request.params.clientId) {
+      return response
+        .status(401)
+        .end();
+    }
+
+    node.removePlayer(clientId, playerId);
+    node.broadcast({ type: 'lobby:update' });
     return response.status(204).end();
   });
 

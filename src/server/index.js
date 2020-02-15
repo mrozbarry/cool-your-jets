@@ -2,9 +2,8 @@ import ParcelBundler from 'parcel-bundler';
 import * as http from 'http';
 import Express from 'express';
 import path from 'path';
-import Lobby from './models/Lobby';
-import Game from './models/Game';
 import Clients from './models/Clients';
+import Node from './models/Node';
 import routes from './routes';
 import websocketServer from './websockets';
 
@@ -15,8 +14,8 @@ function useParcelBundler(expressApp, entryPoint) {
   expressApp.use(bundler.middleware());
 }
 
-function connectWebsocketServer(httpServer, clients, game) {
-  websocketServer(httpServer, clients, game);
+function connectWebsocketServer(httpServer, node) {
+  websocketServer(httpServer, node);
 }
 
 function addGameRoutes(expressApp, clients, game) {
@@ -32,12 +31,11 @@ function runServer(httpServer, port) {
 const app = Express();
 const server = http.createServer(app);
 
-const lobby = new Lobby();
-const game = new Game(lobby);
 const clients = new Clients();
+const node = new Node(clients);
 
-connectWebsocketServer(server, clients, game);
-addGameRoutes(app, clients, game);
+connectWebsocketServer(server, node);
+addGameRoutes(app, node);
 
 useParcelBundler(app, process.argv.slice(-1)[0]);
 runServer(server, 1234);

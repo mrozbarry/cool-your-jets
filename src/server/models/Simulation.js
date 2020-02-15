@@ -1,6 +1,6 @@
 import p2 from 'p2';
 
-export default class Game {
+export default class Simulation {
   constructor({
     timestep,
     thrustForce,

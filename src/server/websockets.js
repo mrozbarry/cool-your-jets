@@ -1,20 +1,13 @@
 import { Server as WebSocketServer } from 'ws';
-import { middleware } from '../lib/pipe';
 
-export default (httpServer, clients, game) => {
+export default (httpServer, node) => {
   const socketServer = new WebSocketServer({ server: httpServer });
 
-  socketServer.on('connection', (client) => {
-    game.connect(client);
+  socketServer.on('connection', (socket) => {
+    node.connect(socket);
 
-    client.on('close', () => {
-      const clientId = game.idByWebsocket(client);
-      if (!clientId) return;
-
-      console.log('SOCKET closed, unready to ', clientId);
-
-      game.unready(clientId);
-      game.lobby();
+    socket.on('close', () => {
+      node.disconnect(socket);
     });
   });
-}
+};
