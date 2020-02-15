@@ -108,3 +108,17 @@ const WaitForKeyboardFx = (dispatch, {
   };
 };
 export const WaitForKeyboard = props => [WaitForKeyboardFx, props];
+
+const WebsocketManagerFX = (_dispatch, { websocket }) => {
+  const sendMessage = ({ detail }) => {
+    console.log('websocketManager.send', detail);
+    websocket.send(detail);
+  };
+
+  document.addEventListener('cyj:ws:send', sendMessage);
+
+  return () => {
+    document.removeEventListener('cyj:ws:send', sendMessage);
+  };
+};
+export const WebsocketManager = props => [WebsocketManagerFX, props];

@@ -1,7 +1,6 @@
 import { app, h } from 'hyperapp';
 import * as subscriptions from '#/ui/subscriptions';
 import * as actions from '#/ui/actions';
-import { grid, playerSetup, overrideStyles } from '#/ui/components';
 
 const styles = {
   td: {
@@ -14,7 +13,7 @@ const styles = {
   },
 };
 
-export default (node) => app({
+export default (node, websocket) => app({
   init: actions.Initialize,
 
   view: state => {
@@ -69,7 +68,7 @@ export default (node) => app({
                   (event) => event.target.innerText,
                 ],
               },
-                p.name,
+              p.name,
               ),
               h('td', { style: { ...styles.td, ...styles.tdPlayer } },
                 p.ready ? 'Yes' : 'No',
@@ -107,6 +106,7 @@ export default (node) => app({
           onPlayerUnlock: actions.UnlockAddingPlayer,
         }),
       ],
+      subscriptions.WebsocketManager({ websocket }),
     ];
   },
 

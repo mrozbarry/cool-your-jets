@@ -8,16 +8,38 @@ export const Initialize = () => [
     keyboardPlayer: null,
     addingPlayer: false,
     exit: false,
-    ships: {}, },
-  effects.Init({
-    onClientId: SetClientId,
-    onShips: SetShips,
-  }),
+    ships: {},
+  },
+  [
+    effects.Init({
+      onClientId: SetClientId,
+      onShips: SetShips,
+    }),
+  ],
 ];
 
-export const SetClientId = (state, { clientId }) => ({
+export const SetClientId = (state, { clientId }) => [
+  {
+    ...state,
+    clientId,
+  },
+  [
+    effects.WebsocketSend({
+      payload: {
+        type: 'clientId:set',
+        clientId,
+      },
+    }),
+    effects.GetPlayers({
+      clientId,
+      onUpdatePlayerList: UpdatePlayerList,
+    }),
+  ],
+];
+
+export const UpdatePlayerList = (state, { players }) => ({
   ...state,
-  clientId,
+  players,
 });
 
 export const SetShips = (state, { ships }) => ({

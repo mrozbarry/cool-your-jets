@@ -12,7 +12,7 @@ const fetchWithClientId = (clientId, url) => fetch(
   },
 );
 
-export const getLobbyPlayers = clientId => fetchWithClientId(
+export const getPlayers = clientId => fetchWithClientId(
   clientId,
   '/api/lobby',
 )

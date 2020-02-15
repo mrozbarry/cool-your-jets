@@ -3,8 +3,10 @@ import ui from './ui';
 import game from './game';
 import postGame from './post-game';
 import AudioControl from './lib/audio';
+import SocketFactory from './lib/Websocket';
 
 const run = () => {
+  const ws = SocketFactory('ws://localhost:1234');
   const uiContainer = document.querySelector('ui-container');
   const gameContainer = document.querySelector('game-container');
 
@@ -24,14 +26,18 @@ const run = () => {
   };
 
   page('*', (_, next) => {
-    AudioControl.waitForLoad().then(() => next());
+    Promise.all([
+      AudioControl.waitForLoad(),
+      ws.open(),
+    ])
+      .then(() => next());
   });
 
   page('/', () => {
     console.log('entering menu');
 
     AudioControl.playLoop('menu');
-    uiCancelFn = createUINode(ui);
+    uiCancelFn = createUINode((node) => ui(node, ws));
   });
 
   page.exit('/', (_context, next) => {
