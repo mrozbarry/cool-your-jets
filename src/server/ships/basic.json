@@ -1,12 +1,23 @@
 {
   "name": "Basic",
-  "vertices": [
-    [0, -20],
-    [12, 20],
-    [-12, 20]
+  "shapes": [
+    {
+      "offset": [0, 0],
+      "type": "polygon",
+      "vertices": [
+        [0, -20],
+        [12, 20],
+        [-12, 20]
+      ]
+    }
   ],
   "indexes": {
-    "head": [0],
-    "thrusters": [1, 2]
+    "head": [
+      { "shape": 0, "vertex": 0 }
+    ],
+    "thrusters": [
+      { "shape": 0, "vertex": 1 },
+      { "shape": 0, "vertex": 2 }
+    ]
   }
 }

@@ -65,16 +65,21 @@ export const AddGamepad = (state, { gamepad, player }) => ({
   players: state.players.concat(player),
   gamepadPlayers: [
     ...state.gamepadPlayers,
-    { index: gamepad.index, identifier: `${state.clientId}.${player.id}` },
+    { index: gamepad.index, identifier: player.identifier },
   ],
   addingPlayer: false,
+});
+
+export const GamepadDisconnect = (state, { identifier }) => ({
+  ...state,
+  gamepadPlayers: state.gamepadPlayers.filter(gpp => gpp.identifier !== identifier),
 });
 
 export const AddKeyboard = (state, { player }) => ({
   ...state,
   players: state.players.concat(player),
   keyboardPlayer: {
-    identifier: `${state.clientId}.${player.id}`,
+    identifier: player.identifier,
   },
   addingPlayer: false,
 });

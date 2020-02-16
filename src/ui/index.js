@@ -3,16 +3,6 @@ import * as subscriptions from '#/ui/subscriptions';
 import * as actions from '#/ui/actions';
 import * as components from '#/ui/components';
 
-const styles = {
-  td: { padding: '8px',
-    fontSize: '1.6rem',
-  },
-
-  tdPlayer: {
-    borderTop: '3px white solid',
-  },
-};
-
 export default (node, websocket) => {
   const messageActions = {
     'lobby:update': actions.LobbyUpdate,
@@ -79,6 +69,11 @@ export default (node, websocket) => {
             onPlayerUnlock: actions.UnlockAddingPlayer,
           }),
         ],
+        !!state.clientId && subscriptions.GamepadDisconnect({
+          clientId: state.clientId,
+          gamepadPlayers: state.gamepadPlayers,
+          onDisconnect: actions.GamepadDisconnect
+        }),
         subscriptions.WebsocketManager({
           websocket,
           messageActions,
