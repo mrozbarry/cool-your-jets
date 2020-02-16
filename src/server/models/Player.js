@@ -1,5 +1,5 @@
 class Player {
-  constructor(clientId) {
+  constructor(clientId, shipModel) {
     this.clientId = clientId;
     this.id = Math.random().toString(36).slice(2);
 
@@ -7,6 +7,7 @@ class Player {
     this.hue = Math.floor(Math.random() * 360);
     this.wins = 0;
     this.ready = false;
+    this.shipModel = shipModel;
     this.inputs = {
       thrust: 0,
       turn: 0,
@@ -23,6 +24,7 @@ class Player {
       identifier: this.identifier,
       name: this.name,
       hue: this.hue,
+      shipModel: this.shipModel,
       wins: this.wins,
       ready: this.ready,
     };

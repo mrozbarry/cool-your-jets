@@ -1,5 +1,6 @@
 import Connection from './Connection';
 import Player from './Player';
+import ships from '../ships/index';
 
 class Node {
   constructor(clients) {
@@ -51,6 +52,7 @@ class Node {
       this.connections.splice(index, 1);
       this.removePlayersFromClient(connection.clientId);
       connection.close();
+      this.broadcast({ type: 'lobby:update' });
     }
 
     return (void 0);
@@ -58,7 +60,6 @@ class Node {
 
   broadcast(message) {
     const serialized = JSON.stringify(message);
-    console.log('Node#broadcast', { message, serialized });
     let connection;
     for(connection of this.connections) {
       connection.websocket.send(serialized);
@@ -70,7 +71,7 @@ class Node {
   }
 
   addPlayer(clientId) {
-    const player = new Player(clientId);
+    const player = new Player(clientId, ships[0].name);
     this.players.push(player);
     return player;
   }
@@ -90,9 +91,7 @@ class Node {
   removePlayersFromClient(clientId, indexOffset = 0) {
     if (!clientId) return (void 0);
 
-    let index = 0;
-
-    for(index in this.players.slice(indexOffset)) {
+    for(let index = indexOffset; index < this.players.length; index += 1) {
       const player = this.players[indexOffset + index];
       if (player.clientId !== clientId) continue;
 

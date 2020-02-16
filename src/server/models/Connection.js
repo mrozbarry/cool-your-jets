@@ -49,6 +49,7 @@ class Connection {
 
     console.log('>> Associated clientid to websocket');
     client.setHasWebsocket(true);
+    this.clientId = message.clientId;
 
     return this.websocket.send(JSON.stringify({
       type: 'clientId:ok',
