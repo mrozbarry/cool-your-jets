@@ -12,7 +12,7 @@ const text = ([x, y], text, lineWidth, style) => {
   return properties({
     lineWidth,
     ...styleProperty,
-    font: '24px screaming_neon',
+    font: '24px goodbyeDispair',
     textAlign: 'left',
     textBaseline: 'top',
   }, [
