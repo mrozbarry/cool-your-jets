@@ -53,7 +53,7 @@ export default (node) => {
     const identifier = request.params.identifier.split('.');
     const [clientId, playerId] = identifier;
 
-    if (clientId !== request.params.clientId) {
+    if (clientId !== request.clientId) {
       return response
         .status(401)
         .end();
