@@ -1,169 +1,93 @@
 import { h } from 'hyperapp';
 
-export const overrideStyles = {
-  fontFamily: `'screaming_neon', sans-serif`,
-  fontSize: '36px',
-  backgroundColor: 'transparent',
-  color: 'white',
-  borderRadius: 0,
-};
-
-const formElementStyles = {
-  ...overrideStyles,
-  display: 'block',
-  border: 'none',
-  outline: 'none',
-  borderBottom: '3px white solid',
-  width: '100%',
-};
-
-const playerContainer = (props, children) => h(
-  'div',
+export const table = (props, children) => h(
+  'table',
   {
-    ...(props || {}),
     style: {
-      fontSize: '36px',
-      padding: '24px',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'space-around',
       width: '100%',
-      height: '100%',
+      height: 'auto',
+      borderCollapse: 'collapse',
     },
   },
-  children,
+  h('thead', null, h('tr', null, props.columns.map(column => h(
+    'th',
+    null,
+    column,
+  )))),
+  h('tbody', null, children),
 );
 
-const fieldset = (props, children) => h(
-  'fieldset',
-  {
-    ...(props || {}),
+export const row = (props, children) => h( 'tr',
+  props,
+  children.map(child => h(
+    'td',
+    {
+      style: {
+        borderBottom: '3px white solid',
+        padding: '1rem',
+      },
+    },
+    child,
+  )),
+);
+
+export const playerRow = ({ player, gamepadPlayers, clientId, ships }) => {
+  const isLocal = player.identifier.startsWith(`${clientId}.`);
+  const identifier = `${player.clientId}.${player.id}`;
+  const localGamepad = isLocal && gamepadPlayers.find(gpp => gpp.identifier === identifier);
+
+  const ship = ships.find(s => s.name === player.shipModel);
+  const f = ship.vertices[0];
+  const lines = ship.vertices
+    .slice(1)
+    .map(([x, y]) => `L ${x} ${y}`);
+  const pathD = [
+    `M ${f[0]} ${f[1]}`,
+    ...lines,
+    'Z',
+  ].join(' ');
+
+  const iconClass = isLocal
+    ? (localGamepad ? 'far fa-gamepad' : 'far fa-keyboard')
+    : 'fas fa-wifi';
+
+  return row({
     style: {
-      ...(props && props.style || {}),
-      width: '100%',
-      border: 'none',
-      outline: 'none',
+      backgroundColor: isLocal
+        ? `hsla(${player.hue}, 100%, 80%, 0.2)`
+        : (void 0),
+      height: '48px',
     },
-  },
-  children,
-);
-
-const label = ({ text, style }, children) => h(
-  'label',
-  {
-    style: {
-      display: 'block',
-      ...(style || {}),
-    },
-  },
-  [
-    text,
-    children,
-  ],
-);
-
-const row = (props, children) => h(
-  'div',
-  {
-    ...(props || {}),
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: '32px',
-      width: '80%',
-      ...(props && props.style || {}),
-    },
-  },
-  children,
-);
-
-export const playerSetup = ({
-  index,
-  controls,
-  name,
-  ready,
-  color: [_h, s, l],
-  controlOptions,
-  gameCountdown,
-}) => {
-  const [type, id] = controls.split('|');
-  const extraGamepadOption = type === 'gamepad' && id !== '-1'
-    ? [[controls, `Gamepad ${id}`]]
-    : [];
-
-  const options = controlOptions.concat(extraGamepadOption);
-
-  return h(playerContainer, null, [
-    row(null, [
-      fieldset(null, [
-        h(label, { text: 'Controls' }, [
-          h('select', {
-            style: {
-              ...formElementStyles,
-              width: '100%',
-            },
-            onchange: [actions.PlayerControls, (event) => ({ index, controls: event.target.value })],
-          }, options.map(([value, label]) => (
-            h('option', { value, selected: value === controls }, label)
-          ))),
-        ]),
+  }, [
+    h('i', { class: iconClass, style: { fontSize: '2rem' } }),
+    h('svg', {
+      viewBox: '0 0 44 44',
+      width: 48,
+      height: 48,
+      xmlns: 'http://www.w3.org/2000/svg',
+      fill: 'transparent',
+    }, [
+      h('g', {
+        transform: 'translate(22, 22)'
+      }, [
+        h('path', {
+          d: pathD,
+          style: {
+            strokeWidth: 3,
+            stroke: `hsl(${player.hue}, 100%, 50%)`,
+          },
+        }),
       ]),
     ]),
-    row(null, [
-      h('div', {
-        style: {
-          border: '3px white solid',
-          backgroundColor: `hsl(${_h}, ${s}%, ${l}%)`,
-          width: '48px',
-          height: '48px',
-          cursor: 'pointer',
-          flex: '0 0 48px',
-          marginRight: '8px',
-
+    h('div', {
+      contentEditable: isLocal,
+      oninput: [
+        (state, text) => {
+          console.log('Updating name', text);
+          return state;
         },
-        onclick: [actions.PlayerColor, { index }],
-      }),
-      fieldset({ style: { flex: 1 } }, [
-        h(label, { text: 'Name' }, [
-          h('input', {
-            value: name,
-            style: formElementStyles,
-            oninput: [actions.PlayerName, (event) => ({ index, name: event.target.value })],
-          }),
-        ]),
-      ]),
-    ]),
-    row(null, [
-      h('button', {
-        type: 'button',
-        style: {
-          ...overrideStyles,
-
-          borderWidth: '3px',
-          padding: '1rem',
-        },
-        disabled: (controls === '' || gameCountdown !== null),
-        onclick: [actions.PlayerReady, { index, ready: !ready }],
-      }, (gameCountdown === null ? (ready ? 'CANCEL' : 'READY') : `Starts in ${gameCountdown}`)),
-    ]),
+        (event) => event.target.innerText,
+      ],
+    }, player.name),
   ]);
 };
-
-export const grid = ({ count }, children) => h(
-  'div',
-  {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gridTemplateRows: count > 2 ? '1fr 1fr' : '1fr',
-      gridGap: '3rem',
-      width: '100vw',
-      height: '100vh',
-    },
-  },
-  children,
-);
-
-

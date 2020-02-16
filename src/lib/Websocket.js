@@ -1,24 +1,5 @@
-import pipe from '#/lib/pipe';
-
-const WebsocketFactory = (address, handlers = {}) => {
+const WebsocketFactory = (address) => {
   let websocket = null;
-
-  const callbacks = {
-    connect: [].concat(handlers.connect || []),
-    message: [].concat(handlers.message || []),
-    disconnect: [].concat(handlers.disconnect || []),
-  };
-
-  const listenForNextMessage = () => {
-    websocket.addEventListener('message', (event) => {
-      pipe(
-        callbacks.message.map(pipe.tap),
-        JSON.parse(event.data),
-      );
-
-      listenForNextMessage();
-    }, { once: true });
-  };
 
   const open = () => {
     return new Promise((resolve, reject) => {
@@ -29,16 +10,20 @@ const WebsocketFactory = (address, handlers = {}) => {
       websocket = new WebSocket(address);
 
       websocket.addEventListener('open', () => {
-        pipe(
-          callbacks.connect.map(pipe.tap),
-          websocket,
-        );
-
-        listenForNextMessage();
 
         return resolve(websocket);
       }, { once: true });
     });
+  };
+
+  const on = (eventName, fn) => {
+    websocket.addEventListener(eventName, fn);
+
+    return () => {
+      if (!websocket) return;
+
+      websocket.removeEventListener(eventName, fn);
+    };
   };
 
   const close = () => {
@@ -64,6 +49,10 @@ const WebsocketFactory = (address, handlers = {}) => {
     close: () => websocket
       ? close()
       : Promise.resolve(),
+
+    on: (eventName, fn) => open()
+      .catch(() => {})
+      .then(() => on(eventName, fn)),
 
     send: (payload) => open()
       .catch(() => {})

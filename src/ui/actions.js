@@ -8,7 +8,7 @@ export const Initialize = () => [
     keyboardPlayer: null,
     addingPlayer: false,
     exit: false,
-    ships: {},
+    ships: [],
   },
   [
     effects.Init({
@@ -35,6 +35,14 @@ export const SetClientId = (state, { clientId }) => [
       onUpdatePlayerList: UpdatePlayerList,
     }),
   ],
+];
+
+export const LobbyUpdate = state => [
+  state,
+  effects.GetPlayers({
+    clientId: state.clientId,
+    onUpdatePlayerList: UpdatePlayerList,
+  }),
 ];
 
 export const UpdatePlayerList = (state, { players }) => ({
