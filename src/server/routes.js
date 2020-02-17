@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import morgan from 'morgan';
+import bodyParser from 'body-parser';
 import ships from './ships';
 
 export default (node) => {
@@ -62,6 +63,26 @@ export default (node) => {
     node.removePlayer(clientId, playerId);
     node.broadcast({ type: 'lobby:update' });
     return response.status(204).end();
+  });
+
+  router.post('/lobby/players/:identifier', mustHaveActiveId, bodyParser.json(), (request, response) => {
+    const identifier = request.params.identifier.split('.');
+    const [clientId, playerId] = identifier;
+
+    const player = node.getPlayer(clientId, playerId);
+
+    if (clientId !== request.clientId || !player) {
+      return response
+        .status(401)
+        .end();
+    }
+
+    player.update(request.body);
+    node.broadcast({ type: 'lobby:update' });
+    return response
+      .status(200)
+      .json(player.toPublicJson())
+      .end();
   });
 
   return router;

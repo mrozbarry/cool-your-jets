@@ -22,9 +22,9 @@ function addGameRoutes(expressApp, clients, game) {
   expressApp.use('/api', routes(clients, game));
 }
 
-function runServer(httpServer, port) {
-  httpServer.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+function runServer(httpServer, port, host) {
+  httpServer.listen(port, host, () => {
+    console.log(`Server running on http://${host}:${port}`);
   });
 }
 
@@ -38,5 +38,39 @@ connectWebsocketServer(server, node);
 addGameRoutes(app, node);
 
 useParcelBundler(app, process.argv.slice(-1)[0]);
-runServer(server, 1234);
+runServer(server, 1234, '0.0.0.0');
 
+const GAME_WAIT = 10000;
+
+let lobby = {
+  gameStartsIn: null,
+  handle: null,
+};
+
+node.on('player:add', () => {
+  if (node.players.length >= 2 && lobby.gameStartsIn === null) {
+    lobby.gameStartsIn = Date.now() + GAME_WAIT;
+    lobby.handle = setTimeout(() => {
+      node.setLocked(true);
+      node.broadcast({
+        type: 'game:start',
+      });
+    }, GAME_WAIT);
+  }
+  node.broadcast({
+    type: 'game:wait',
+    time: lobby.gameStartsIn,
+  });
+});
+
+node.on('player:remove', () => {
+  if (node.players.length < 2) {
+    clearTimeout(lobby.handle);
+    lobby.gameStartsIn = null;
+    lobby.handle = null;
+  }
+  node.broadcast({
+    type: 'game:wait',
+    time: lobby.gameStartsIn,
+  });
+});

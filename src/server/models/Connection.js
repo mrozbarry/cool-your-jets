@@ -17,13 +17,9 @@ class Connection {
 
   close() {
     this.websocket.close();
-    this.clientId = null;
-    this.websocket = null;
-    this.node = null;
   }
 
   handleMessage(event) {
-    console.log('Connection#handleMessage', typeof event.data, event.data);
     pipe([
       this.waitForClientIdAssociation,
       this.handleGameMessage,
@@ -47,7 +43,6 @@ class Connection {
       }));
     }
 
-    console.log('>> Associated clientid to websocket');
     client.setHasWebsocket(true);
     this.clientId = message.clientId;
 

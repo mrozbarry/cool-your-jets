@@ -8,6 +8,7 @@ class Node {
     this.connections = [];
     this.players = [];
     this.locked = false;
+    this.callbacks = {};
   }
 
   destroy() {
@@ -19,7 +20,26 @@ class Node {
 
     this.connections = [];
     this.players = [];
+    this.callbacks = {};
     this.locked = false;
+  }
+
+  on(type, fn) {
+    this.callbacks[type] = this.callbacks[type] || [];
+    this.callbacks[type].push(fn);
+
+    return () => {
+      const index = this.callbacks[type].findIndex(f => f === fn);
+      this.callbacks[type].splice(index, 1);
+    };
+  }
+
+  emit(type, ...params) {
+    if (!this.callbacks[type] || this.callbacks[type].length === 0) return;
+    let fn;
+    for(fn of this.callbacks[type]) {
+      fn(...params, this);
+    }
   }
 
   connect(websocket) {
@@ -29,9 +49,10 @@ class Node {
       return websocket.close();
     }
 
-    this.connections.push(
-      new Connection(this, websocket),
-    );
+    const connection = new Connection(this, websocket);
+    this.connections.push(connection);
+
+    this.emit('connection:add', connection);
 
     return (void 0);
   }
@@ -52,6 +73,7 @@ class Node {
       this.connections.splice(index, 1);
       this.removePlayersFromClient(connection.clientId);
       connection.close();
+      this.emit('connection:remove', connection);
       this.broadcast({ type: 'lobby:update' });
     }
 
@@ -73,6 +95,7 @@ class Node {
   addPlayer(clientId) {
     const player = new Player(clientId, ships[0].name);
     this.players.push(player);
+    this.emit('player:add', player);
     return player;
   }
 
@@ -83,9 +106,15 @@ class Node {
 
     if (index === -1) return false;
 
-    this.players.splice(index, 1);
+    const player = this.players.splice(index, 1);
+    this.emit('player:remove', player);
 
     return true;
+  }
+
+  getPlayer(clientId, playerId) {
+    const identifier = `${clientId}.${playerId}`;
+    return this.players.find(p => p.identifier === identifier);
   }
 
   removePlayersFromClient(clientId, indexOffset = 0) {
@@ -95,7 +124,7 @@ class Node {
       const player = this.players[indexOffset + index];
       if (player.clientId !== clientId) continue;
 
-      this.players.splice(index, 1);
+      this.removePlayer(player.clientId, player.id);
 
       return this.removePlayersFromClient(clientId, index);
     }
