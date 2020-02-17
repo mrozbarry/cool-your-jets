@@ -30,6 +30,26 @@
       padding: 0;
       margin-bottom: 10px;
     }
+
+    @keyframes Loading {
+      0% {
+        color: white;
+      }
+      50% {
+        color: red;
+      }
+    }
+
+    .loading::before {
+      content: '-';
+      animation: Loading 500ms ease-in-out infinite;
+      animation-delay: 0ms;
+    }
+    .loading::after {
+      content: '-';
+      animation: Loading 500ms ease-in-out infinite;
+      animation-delay: 250ms;
+    }
     </style>
     <script src="https://kit.fontawesome.com/57cb566a11.js" crossorigin="anonymous"></script>
   </head>
