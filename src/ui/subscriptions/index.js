@@ -1,3 +1,4 @@
+export { GameCountdown } from './GameCountdown';
 export { GamepadDisconnect } from './GamepadDisconnect';
 export { WaitForGamepad } from './WaitForGamepad';
 export { WaitForKeyboard } from './WaitForKeyboard';

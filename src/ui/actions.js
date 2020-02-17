@@ -9,6 +9,9 @@ export const Initialize = () => [
     addingPlayer: false,
     exit: false,
     ships: [],
+    editPlayer: {},
+    gameStartsIn: null,
+    gameStartsInDisplay: 0,
   },
   [
     effects.Init({
@@ -17,6 +20,28 @@ export const Initialize = () => [
     }),
   ],
 ];
+
+const serializeState = state => {
+  const controls = [
+    ...state.gamepadPlayers.map(gpp => ({
+      identifier: gpp.identifier,
+      controls: `gamepad|${gpp.index}`,
+    })),
+  ];
+  if (state.keyboardPlayer) {
+    controls.push({
+      identifier: state.keyboardPlayer.identifier,
+      controls: `keyboard|arrows`,
+    });
+  }
+  return btoa(JSON.stringify(controls));
+};
+
+
+export const GameStartTick = (state, { remaining }) => ({
+  ...state,
+  gameStartsInDisplay: remaining,
+});
 
 export const SetClientId = (state, { clientId }) => [
   {
@@ -43,6 +68,18 @@ export const LobbyUpdate = state => [
     clientId: state.clientId,
     onUpdatePlayerList: UpdatePlayerList,
   }),
+];
+
+export const GameWait = (state, props) => ({
+  ...state,
+  gameStartsIn: props.time,
+});
+
+export const GameStart = state => [
+  { ...state, exit: true },
+  effects.PageNavigate(
+    `/play/network/${state.clientId}/${serializeState(state)}`,
+  ),
 ];
 
 export const UpdatePlayerList = (state, { players }) => ({
@@ -82,6 +119,43 @@ export const AddKeyboard = (state, { player }) => ({
     identifier: player.identifier,
   },
   addingPlayer: false,
+});
+
+export const EditLocalPlayer = (state, { identifier }) => {
+  const [clientId] = identifier.split('.');
+  if (clientId !== state.clientId) return state;
+
+  const player = state.players.find(p => p.identifier === identifier);
+
+  return {
+    ...state,
+    editPlayer: {
+      ...player,
+      loading: false,
+    },
+  };
+};
+
+export const EditLocalPlayerChange = (state, { key, value }) => ({
+  ...state,
+  editPlayer: {
+    ...state.editPlayer,
+    [key]: value,
+  },
+});
+
+export const EditLocalPlayerSave = (state, { payload }) => [
+  { ...state, editPlayer: { ...state.editPlayer, loading: true } },
+  effects.PlayerUpdate({
+    player: state.editPlayer,
+    clientId: state.clientId,
+    onDone: CancelEditLocalPlayer,
+  }),
+];
+
+export const CancelEditLocalPlayer = (state, props) => ({
+  ...state,
+  editPlayer: (!props || props.shouldClose) ? {} : state.editPlayer,
 });
 
 export const LockAddingPlayer = state => ({

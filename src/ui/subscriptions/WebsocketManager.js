@@ -13,9 +13,9 @@ const WebsocketManagerFX = (dispatch, { websocket, messageActions }) => {
       console.log('got a message', data);
       return;
     }
-    dispatch(action);
+    dispatch(action, data);
   })
-    .then((fn) => { cancel = fn });
+    .then((fn) => { cancel = fn; });
 
   document.addEventListener('cyj:ws:send', sendMessage);
 

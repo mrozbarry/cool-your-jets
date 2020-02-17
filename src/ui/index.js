@@ -6,15 +6,15 @@ import * as components from '#/ui/components';
 export default (node, websocket) => {
   const messageActions = {
     'lobby:update': actions.LobbyUpdate,
+    'game:wait': actions.GameWait,
+    'game:start': actions.GameStart,
   };
 
   return app({
     init: actions.Initialize,
 
     view: state => {
-      if (state.exit) {
-        return h('div');
-      }
+      if (state.exit) return h('div');
 
       return h('div', {
         style: {
@@ -23,23 +23,37 @@ export default (node, websocket) => {
         },
       }, [
         h('div', { style: { overflow: 'auto' } }, [
-          h('pre', null, JSON.stringify(state, null, 2)),
+          state.gameStartsIn === null
+            ? h('h1', null, 'Waiting for more players...')
+            : h('h1', null, `Game starts in ${state.gameStartsInDisplay.toFixed(1)}`),
         ]),
 
         h('div', null, [
           h(
             components.table,
-            { columns: ['', 'ship', 'name'] },
+            {
+              columns: ['', 'ship', 'name'],
+              widths: ['48px', '48px', 'auto'],
+            },
             state.players.map(player => (
               components.playerRow({
                 player,
                 gamepadPlayers: state.gamepadPlayers,
                 clientId: state.clientId,
                 ships: state.ships,
+                onEdit: actions.EditLocalPlayer,
               })
             )),
           ),
         ]),
+
+        !!state.editPlayer.identifier && h(components.updatePlayerModal, {
+          ships: state.ships,
+          player: state.editPlayer,
+          onEdit: actions.EditLocalPlayerChange,
+          onSubmit: actions.EditLocalPlayerSave,
+          onCancel: actions.CancelEditLocalPlayer,
+        }),
       ]);
     },
 
@@ -72,11 +86,15 @@ export default (node, websocket) => {
         !!state.clientId && subscriptions.GamepadDisconnect({
           clientId: state.clientId,
           gamepadPlayers: state.gamepadPlayers,
-          onDisconnect: actions.GamepadDisconnect
+          onDisconnect: actions.GamepadDisconnect,
         }),
         subscriptions.WebsocketManager({
           websocket,
           messageActions,
+        }),
+        !!state.gameStartsIn && subscriptions.GameCountdown({
+          gameStartsIn: state.gameStartsIn,
+          onTick: actions.GameStartTick,
         }),
       ];
     },

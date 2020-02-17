@@ -6,7 +6,7 @@ import AudioControl from './lib/audio';
 import SocketFactory from './lib/Websocket';
 
 const run = () => {
-  const ws = SocketFactory('ws://localhost:1234');
+  const ws = SocketFactory(`ws://${location.host}`);
   const uiContainer = document.querySelector('ui-container');
   const gameContainer = document.querySelector('game-container');
 
@@ -59,7 +59,26 @@ const run = () => {
     console.log('exiting game');
     // Stop game music
     // Stop game tick
-    AudioControl.stopAudio('game');
+    AudioControl.stopLoops();
+    gameCancelFn();
+
+    next();
+  });
+
+  page('/play/network/:clientId/:config', (context) => {
+    console.log('entering game', context);
+    const config = JSON.parse(atob(context.params.config));
+    console.log(config);
+    AudioControl.playLoop('game');
+    gameCancelFn = () => {};
+    // gameCancelFn = game(config, gameContainer);
+  });
+
+  page.exit('/play/network/:clientId/:config', (_context, next) => {
+    console.log('exiting game');
+    // Stop game music
+    // Stop game tick
+    AudioControl.stopLoops();
     gameCancelFn();
 
     next();
