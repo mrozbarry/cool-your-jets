@@ -10,6 +10,7 @@
     "start": "nodemon ./server.js ./index.html"
   },
   "dependencies": {
+    "body-parser": "^1.19.0",
     "esm": "^3.2.25",
     "express": "^4.17.1",
     "hyperapp": "^2.0.3",
