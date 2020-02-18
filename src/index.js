@@ -1,6 +1,7 @@
 import page from 'page';
 import ui from './ui';
 import game from './game';
+import networkGame from './network-game';
 import postGame from './post-game';
 import AudioControl from './lib/audio';
 import SocketFactory from './lib/Websocket';
@@ -70,7 +71,7 @@ const run = () => {
     const config = JSON.parse(atob(context.params.config));
     console.log(config);
     AudioControl.playLoop('game');
-    gameCancelFn = () => {};
+    gameCancelFn = networkGame(config, gameContainer);
     // gameCancelFn = game(config, gameContainer);
   });
 
